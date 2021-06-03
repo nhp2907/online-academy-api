@@ -39,7 +39,7 @@ app.use('/api/course', require('./routes/course.route'))
 // app.use('/cart/payment', require('./routes/payment'));
 // app.use('/my-courses', require('./routes/my-course'));
 app.use(function (err, req, res, next) {
-    console.error(err.stack)
+    console.error(err)
     res.status(500).send('Something broke!')
 })
 const PORT = process.env.PORT || 5000;
