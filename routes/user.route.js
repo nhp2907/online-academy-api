@@ -4,6 +4,7 @@ const UserService = require("../services/user.service");
 const router = express.Router();
 
 const multer = require('multer')
+const UserModel = require("../schemas/user.schema");
 const USER_IMAGE_PATH = "public/assets/images/users/";
 
 const storage = multer.diskStorage({
@@ -17,25 +18,23 @@ const storage = multer.diskStorage({
 })
 const upload = multer({storage: storage});
 
-router.get('/auth', (req, res) => {
-    if (req.cookies.token) {
-        res.redirect('/');
-    }
-    res.render('pages/auth', {
-        layout: 'blank',
-        css: ['auth']
-    })
+router.get('/', async (req, res) => {
+    const criteria = req.params;
+    const users = await UserModel.find(criteria).exec();
+    res.send(users);
 })
 
-router.get('/me', async (req, res) => {
-    const user = res.locals.user;
-    if (!user) {
-        res.status(401).send({
-            message: 'Invalid token'
+router.put('/:id', async (req, res) => {
+    const updateUser = req.body;
+    delete updateUser.roleId;
+    delete updateUser.role;
+    try {
+        await UserModel.updateOne({_id: updateUser.id}, updateUser, {upsert: true});
+        res.send(updateUser);
+    } catch (err) {
+        res.status(400).send({
+            message: err.message
         })
-    } else {
-        delete user.password
-        res.send(user);
     }
 })
 
@@ -81,9 +80,9 @@ router.post('/update-password', async (req, res) => {
             message: 'success'
         })
     } else {
-      res.status(401).send({
-          message: "Incorrect password"
-      })
+        res.status(401).send({
+            message: "Incorrect password"
+        })
     }
 })
 

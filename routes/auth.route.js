@@ -1,8 +1,7 @@
 const express = require('express')
 const UserRole = require("../constant/UserRole");
 const AuthService = require("../services/auth.service");
-const {findByUsername} = require("../services/user.service");
-const {findByEmail} = require("../services/user.service");
+const UserModel = require("../schemas/user.schema");
 
 
 const router = express.Router();
@@ -36,7 +35,7 @@ router.post('/login', async (req, res, next) => {
             message: "Incorrect username or password!"
         })
     }
-    const user = await findByUsername(username);
+    const user = await UserModel.findOne({username});
     delete user.password;
     console.log(user.toJSON());
     res.send({
