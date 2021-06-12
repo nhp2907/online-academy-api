@@ -7,6 +7,7 @@ const category = new Schema({
         type: String,
         minLength: 1
     },
+    uniqueName: String,
     icon: {
         type: String,
         minLength: 1

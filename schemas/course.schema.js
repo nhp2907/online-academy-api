@@ -3,14 +3,30 @@ const {Schema} = mongoose
 const mongoJson = require('@meanie/mongoose-to-json')
 const courseSchema = new Schema({
     name: String,
-    headline: String,
-    image: String,
+    categoryId: {
+        type: mongoose.Schema.Types.ObjectId, ref: 'Category',
+        required: true
+    },
+    headline: {
+        type: String,
+        required: true
+    },
+    image: {
+        type: String,
+        required: true
+    },
     concurrency: String,
-    price: Number,
+    price: {
+        type: Number,
+        required: true
+    },
     prePrice: Number,
     discount: Number,
     language: String,
-    description: String,
+    description: {
+        type: String,
+        required: true
+    },
     rating: Number,
     numReview: Number,
     numLecture: Number,

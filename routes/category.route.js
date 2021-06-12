@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
     const sameNameCate = await CategoryModel.find({name: cate.name}).exec();
     if (sameNameCate.length > 0) {
         res.status(400).send({
-            message: `Category name ${cate.name} already exist`
+            message: `Category name '${cate.name}' already exist`
         })
         return;
     }

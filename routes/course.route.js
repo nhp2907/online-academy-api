@@ -1,3 +1,6 @@
+
+const ValidationError = require('mongoose/lib/error/validation');
+
 const router = require('express').Router()
 const Course = require('../schemas/course.schema')
 
@@ -14,9 +17,19 @@ router.get('/search', async (req, res) => {
 })
 
 router.post('/', async (req, res) => {
-    const course = await Course.create(req.body);
-    console.log('course', course);
-    res.send(course)
+    try {
+        const course = await Course.create(req.body);
+        res.send(course)
+    } catch (err) {
+        if (err instanceof ValidationError) {
+            res.status(400).send({
+                code: 400,
+                message: err.message
+            })
+        } else {
+            throw err;
+        }
+    }
 })
 
 module.exports = router;
