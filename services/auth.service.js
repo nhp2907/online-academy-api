@@ -11,8 +11,7 @@ const UserModel = require("../schemas/user.schema");
 const verifyJwt = (req, res, next) => {
     const authHeader = req.headers.authorization;
     const token = authHeader.substring(7);
-    console.log(token)
-    req.session.returnTo = req.originalUrl;
+    console.log('token', token)
     if (req.originalUrl === '/logout' || !token) {
         next();
     } else {

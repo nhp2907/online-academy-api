@@ -20,12 +20,20 @@ const storage = multer.diskStorage({
 const upload = multer({storage: storage});
 
 router.get('/', async (req, res) => {
+    console.log('instructor detail')
     const criteria = req.params;
-    const users = await UserModel.find(criteria).where("roleId").ne(UserRole.Admin).exec();
-    res.send(users);
+    const instructors = await UserModel.find(criteria).where("roleId").eq(UserRole.Instructor).exec();
+    res.send(instructors);
+})
+
+router.get('/:id', async (req, res) => {
+    const instructor = await UserModel.findOne({_id: req.params.id, roleId: UserRole.Instructor}).exec();
+    console.log(instructor)
+    res.send(instructor);
 })
 
 router.put('/:id', async (req, res) => {
+    console.log('instructor detail')
     const updateUser = req.body;
     delete updateUser.roleId;
     delete updateUser.role;
