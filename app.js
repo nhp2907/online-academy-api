@@ -2,8 +2,6 @@ const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const session = require('express-session');
-const User = require("./models/user");
 require('dotenv').config();
 require('./models/relation-mapping');
 require('./models/mongodb');
@@ -12,14 +10,6 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors())
-// app.use(session({
-//     secret: 'keyboard cat',
-//     resave: false,
-//     saveUninitialized: true,
-//     cookie: {
-//         // secure: true
-//     }
-// }));
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -39,6 +29,7 @@ app.use('/api/course', require('./routes/course.route'))
 // app.use('/cart', require('./routes/cart'));
 // app.use('/cart/payment', require('./routes/payment'));
 // app.use('/my-courses', require('./routes/my-course'));
+
 app.use(function (err, req, res, next) {
     console.error(err)
     res.status(500).send('Something broke!')
