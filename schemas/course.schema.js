@@ -7,13 +7,19 @@ const courseSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId, ref: 'Category',
         required: true
     },
+    subCategoryId: {
+        type: mongoose.Schema.Types.ObjectId, ref: 'Category'
+    },
+    instructorId: {
+        type: mongoose.Schema.Types.ObjectId, ref: 'User',
+        required: true
+    },
     headline: {
         type: String,
         required: true
     },
     image: {
-        type: String,
-        required: true
+        type: String
     },
     concurrency: String,
     price: {
