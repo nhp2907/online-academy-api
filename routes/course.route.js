@@ -7,6 +7,7 @@ const UserRole = require("../constant/UserRole");
 const CourseChapterModel = require("../schemas/course-chapter.schema");
 const fs = require('fs');
 const CourseVideoModel = require("../schemas/course-video.schema");
+const {apiUrl} = require("../constant/configs");
 const {PROJECT_DIR} = require("../setting");
 
 const COURSE_IMAGE_PATH = "public/course/image";
@@ -127,7 +128,7 @@ router.post('/:id/image', uploadCourseImage.single('image'), async (req, res) =>
         const courseId = req.params.id;
         const course = await CourseModel.findOne({_id: courseId}).exec();
         const oldImage = course.image;
-        const newImagePath = file.path.replace('public', '');
+        const newImagePath = apiUrl + file.path.replace('public', '');
         const updateResult = await CourseModel.updateOne({_id: courseId}, {image: newImagePath});
         res.send(updateResult)
         if (oldImage) {
@@ -149,7 +150,7 @@ router.post('/:id/image', uploadCourseImage.single('image'), async (req, res) =>
 
 router.get('/:id/image', async (req, res) => {
     const course = await CourseModel.findById(req.params.id).exec();
-    res.sendFile(PROJECT_DIR + '\\' + course.image);
+    res.sendFile(PROJECT_DIR + course.image);
 })
 
 //region Course Chapter
