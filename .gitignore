@@ -1,3 +1,6 @@
 node_modules
 .idea
 .env
+
+data
+public/course/image

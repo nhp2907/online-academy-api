@@ -7,6 +7,7 @@ const UserRole = require("../constant/UserRole");
 const CourseChapterModel = require("../schemas/course-chapter.schema");
 const fs = require('fs');
 const CourseVideoModel = require("../schemas/course-video.schema");
+const CategoryModel = require("../schemas/category.schema");
 const {apiUrl} = require("../constant/configs");
 const {PROJECT_DIR} = require("../setting");
 
@@ -37,10 +38,32 @@ const uploadCourseVideo = multer({storage: videoStorage})
 
 router.get('/', async (req, res) => {
     const criteria = req.query
-    console.log(criteria);
+    if (criteria.categoryName) {
+        const cate = await CategoryModel.findOne({uniqueName: criteria.categoryName.toLowerCase()}).exec();
+        delete criteria.categoryName
+        criteria.categoryId = cate._id
+    }
     const course = await CourseModel.find(criteria).exec();
     console.log('courses', course);
     res.send(course)
+})
+
+router.get('/search', async (req, res) => {
+    const kw = req.query.kw;
+    console.log(kw);
+    const result = [];
+    const cate = await CategoryModel.findOne({uniqueName: kw.toLowerCase()}).exec();
+
+    if (cate) {
+        const coursesByCate = await CourseModel.find({categoryId: cate.id}).exec();
+        result.push(...coursesByCate);
+    }
+
+    const coursesSearch = await CourseModel.find({$text: {$search: kw}}).exec();
+    result.push(...coursesSearch);
+    console.log(result.length);
+
+    res.send(result)
 })
 
 router.get('/:id', async (req, res) => {

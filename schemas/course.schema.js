@@ -38,7 +38,8 @@ const courseSchema = new Schema({
     numLecture: Number,
     status: String,
     estimateContentLength: Number,
-    numStudentEnroll: Number
+    numStudentEnroll: Number,
+    views: Number
 }, {timestamps: true}).plugin(mongoJson)
 
 const CourseModel = mongoose.model('Course', courseSchema);
