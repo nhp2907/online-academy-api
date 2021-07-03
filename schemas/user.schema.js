@@ -30,6 +30,10 @@ const userSchema = new Schema({
        type: Number,
        required: true
    },
+   status: {
+       type: Boolean,
+       default: true
+   }
 }, {timestamps: true}).plugin(mongoJson)
 
 const UserModel = mongoose.model('User', userSchema);

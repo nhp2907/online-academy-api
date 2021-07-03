@@ -1,4 +1,6 @@
 const fs = require('fs');
+const ValidationError = require('mongoose/lib/error/validation');
+
 const express = require('express')
 const UserService = require("../services/user.service");
 const router = express.Router();
@@ -17,12 +19,32 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + ext)
     }
 })
+
 const upload = multer({storage: storage});
 
 router.get('/', async (req, res) => {
     const criteria = req.params;
     const users = await UserModel.find(criteria).where("roleId").ne(UserRole.Admin).exec();
     res.send(users);
+})
+
+router.post('/', async (req, res) => {
+    const body = req.body;
+    try {
+        const newUser = await UserModel.create(body);
+        res.send(newUser);
+    } catch (err) {
+        if (err instanceof ValidationError) {
+            console.log('create course error: ', err);
+            res.status(400).send({
+                code: 400,
+                message: err.message
+            })
+        } else {
+            throw err;
+        }
+    }
+
 })
 
 router.put('/:id', async (req, res) => {
@@ -39,35 +61,8 @@ router.put('/:id', async (req, res) => {
     }
 })
 
-router.put('/update-basic-info', async (req, res) => {
-    const user = req.body
-    user.id = res.locals.user.id;
-    // validate if necessary
-    const updatedUser = await UserService.updateBasicInfo(user).then(r => console.log('update user basic info successfully', r));
-    res.locals.user = updatedUser;
-
-    res.json(updatedUser);
-})
-
 router.post('/update-avatar', upload.single('avatar'), async (req, res) => {
-    const file = req.file;
-    if (!file) {
-        res.redirect('/user/me')
-    }
-    console.log(file)
-    const oldPath = res.locals.user.image;
-    const user = await UserService.updateBasicInfo({
-        id: res.locals.user.id,
-        image: 'assets/images/users/' + file.filename
-    })
-        .then(r => console.log('update avatar', r));
-    res.locals.user = user;
-    fs.rmSync(`public/` + oldPath, {
-        force: true,
-    });
-    res.status(200).send({
-        message: "success"
-    })
+
 })
 
 router.post('/update-password', async (req, res) => {
