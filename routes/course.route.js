@@ -7,6 +7,7 @@ const UserRole = require("../constant/UserRole");
 const CourseChapterModel = require("../schemas/course-chapter.schema");
 const fs = require('fs');
 const CourseVideoModel = require("../schemas/course-video.schema");
+const {apiUrl} = require("../constant/configs");
 const {PROJECT_DIR} = require("../setting");
 
 const COURSE_IMAGE_PATH = "public/course/image";
@@ -223,6 +224,15 @@ router.get('/:courseId/chapter/:chapterId/video', async (req, res) => {
     res.send(videos)
 })
 
+router.get('/:courseId/chapter/:chapterId/video/:videoId/stream', async (req, res) => {
+    // todo: check course belong to user
+    const video = await CourseVideoModel.findOne({_id: req.params.videoId}).exec();
+
+    res.sendFile(PROJECT_DIR + '\\' + video.videoUrl, {}, (a) => {
+
+    })
+})
+
 router.post('/:courseId/chapter/:chapterId/video', uploadCourseVideo.single('file'), async (req, res) => {
     const file = req.file;
     console.log(
@@ -272,6 +282,15 @@ router.put('/:courseId/chapter/:chapterId/video', async (req, res) => {
         } else {
             throw err;
         }
+    }
+})
+
+router.delete('/:courseId/chapter/:chapterId/video/:videoId', async (req, res) => {
+    try {
+        const deleteRes = await CourseVideoModel.deleteOne({_id: req.params.videoId}).exec()
+        res.send(deleteRes);
+    } catch (err) {
+        res.status(400).send({message: err.message})
     }
 })
 
