@@ -319,4 +319,15 @@ router.delete('/:courseId/chapter/:chapterId/video/:videoId', async (req, res) =
 
 //endregion
 
+//region Reviews
+router.get('/:courseId/review', async (req, res) => {
+
+})
+
+router.post('/:courseId/review', async (req, res) => {
+
+})
+
+//endregion
+
 module.exports = router;
