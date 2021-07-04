@@ -21,6 +21,7 @@ app.use('/api/home', require('./routes/home.route'))
 app.use('/api/validate', require('./routes/validate.route'));
 app.use('/api/user', verifyJwt, require('./routes/user.route'));
 app.use('/api/instructor', verifyJwt, verifyInstructor, require('./routes/instructor.route'));
+app.use('/api/public/instructor', require('./routes/instructor-public.route'));
 app.use('/api/admin',verifyJwt, verifyAdmin, require('./routes/admin.route'));
 app.use('/api/category', require('./routes/category.route'))
 app.use('/api/course', require('./routes/course.route'))

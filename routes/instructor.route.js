@@ -33,8 +33,6 @@ router.get('/:id', async (req, res) => {
 })
 
 router.get('/user/:userId', async (req, res) => {
-
-    console.log('cc')
     console.log(req.params)
     const instructor = await InstructorModel.findOne({userId: req.params.userId}).exec();
     res.send(instructor);
