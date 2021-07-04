@@ -8,26 +8,6 @@ const UserModel = require("../schemas/user.schema");
  * @param res
  * @param next
  */
-const verifyJwt = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader.substring(7);
-    console.log('token', token)
-    if (req.originalUrl === '/logout' || !token) {
-        next();
-    } else {
-        jwt.verify(token, process.env.JWT_SECRET_KEY, async (err, decoded) => {
-            if (err) {
-                console.log("err")
-                throw new Error("Token is invalid!")
-            }
-
-            const user = await UserModel.findOne({username: decoded.username}).exec();
-            delete user.password;
-            res.locals.user = user.toJSON();
-            next();
-        })
-    }
-}
 
 /**
  * @param user
@@ -71,7 +51,6 @@ const login = async (username, password) => {
 }
 
 module.exports = {
-    verifyJwt,
     signup,
     login
 };

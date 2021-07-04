@@ -8,6 +8,9 @@ const CourseChapterModel = require("../schemas/course-chapter.schema");
 const fs = require('fs');
 const CourseVideoModel = require("../schemas/course-video.schema");
 const CategoryModel = require("../schemas/category.schema");
+const InstructorModel = require("../schemas/instructor.schema");
+const {verifyJwt} = require("../middleware/user.middleware");
+const {verifyInstructor} = require("../middleware/user.middleware");
 const {apiUrl} = require("../constant/configs");
 const {PROJECT_DIR} = require("../setting");
 
@@ -81,12 +84,12 @@ router.get('/search', async (req, res) => {
 })
 
 // create course
-router.post('/', async (req, res) => {
+router.post('/', verifyJwt, verifyInstructor, async (req, res) => {
     try {
         const dto = req.body;
         console.log('create course dto: ', dto);
         // check instructor
-        const instructor = UserModel.findOne({_id: dto.instructorId, roleId: UserRole.Instructor})
+        const instructor = InstructorModel.findOne({_id: dto.instructorId})
         if (!instructor) {
             res.status(400).send({
                 message: "Instructor not found!"

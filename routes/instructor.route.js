@@ -28,8 +28,15 @@ router.get('/', async (req, res) => {
 })
 
 router.get('/:id', async (req, res) => {
-    const instructor = await UserModel.findOne({_id: req.params.id}).exec();
-    console.log(instructor)
+    const instructor = await InstructorModel.findOne({_id: req.params.id}).exec();
+    res.send(instructor);
+})
+
+router.get('/user/:userId', async (req, res) => {
+
+    console.log('cc')
+    console.log(req.params)
+    const instructor = await InstructorModel.findOne({userId: req.params.userId}).exec();
     res.send(instructor);
 })
 

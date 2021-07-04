@@ -11,7 +11,7 @@ const courseSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId, ref: 'Category'
     },
     instructorId: {
-        type: mongoose.Schema.Types.ObjectId, ref: 'User',
+        type: mongoose.Schema.Types.ObjectId, ref: 'Instructor',
         required: true
     },
     headline: {

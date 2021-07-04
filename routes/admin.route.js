@@ -9,6 +9,7 @@ const UserRole = require("../constant/UserRole");
 const CategoryModel = require("../schemas/category.schema");
 const CourseModel = require("../schemas/course.schema");
 const CategoryService = require('../services/category.service')
+const InstructorModel = require("../schemas/instructor.schema");
 const {signup} = require("../services/auth.service");
 
 //region User
@@ -28,8 +29,19 @@ router.post('/user', async (req, res) => {
         body.roleId = body.roleId || UserRole.Student;
         body.role = body.roleId === 2 ? 'Student' : 'Instructor';
         const user = await signup(body);
-        // const newUser = await UserModel.updateOne({_id: user.id}, {role: UserRole[UserRole.Instructor], roleId: UserRole.Instructor});
-        console.log('neew user', user)
+
+        if (body.roleId === UserRole.Instructor) {
+            try {
+                const instructor = await InstructorModel.create({userId: user.id})
+            } catch (err) {
+                await UserModel.deleteOne({_id: user.id}).exec();
+                res.status(500).send({
+                    message: 'Something broken!'
+                })
+                return;
+            }
+        }
+
         res.send(user);
     } catch (err) {
         if (err instanceof ValidationError) {
