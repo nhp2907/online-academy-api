@@ -12,7 +12,17 @@ router.post('/signup', async (req, res) => {
         const rawPassword = user.password;
         console.log(user);
         user.roleId = user.roleId || UserRole.Student;
-        const savedUser = await AuthService.signup(user);
+        user.role = 'Student';
+        const cloneUser = {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            email: user.email,
+            password: user.password,
+            roleId: user.roleId,
+            role: user.role
+        }
+        const savedUser = await AuthService.signup(cloneUser);
         delete savedUser.password
         const token = await AuthService.login(user.username, rawPassword)
         res.send({

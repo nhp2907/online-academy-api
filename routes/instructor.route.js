@@ -6,6 +6,7 @@ const router = express.Router();
 const multer = require('multer')
 const UserModel = require("../schemas/user.schema");
 const UserRole = require("../constant/UserRole");
+const InstructorModel = require("../schemas/instructor.schema");
 const USER_IMAGE_PATH = "public/assets/images/users/";
 
 const storage = multer.diskStorage({
@@ -22,12 +23,12 @@ const upload = multer({storage: storage});
 router.get('/', async (req, res) => {
     console.log('instructor detail')
     const criteria = req.params;
-    const instructors = await UserModel.find(criteria).where("roleId").eq(UserRole.Instructor).exec();
+    const instructors = await InstructorModel.find(criteria).where("roleId").eq(UserRole.Instructor).exec();
     res.send(instructors);
 })
 
 router.get('/:id', async (req, res) => {
-    const instructor = await UserModel.findOne({_id: req.params.id, roleId: UserRole.Instructor}).exec();
+    const instructor = await UserModel.findOne({_id: req.params.id}).exec();
     console.log(instructor)
     res.send(instructor);
 })

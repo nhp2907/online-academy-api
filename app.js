@@ -19,6 +19,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // app.use('/', require('./routes/index'));
 app.use('/api/auth', require('./routes/auth.route'));
 app.use('/api/home', require('./routes/home.route'))
+app.use('/api/validate', require('./routes/validate.route'));
 app.use('/api/user', verifyJwt, require('./routes/user.route'));
 app.use('/api/instructor', require('./routes/instructor.route'));
 app.use('/api/category', require('./routes/category.route'))

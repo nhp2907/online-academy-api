@@ -4,6 +4,12 @@ const jwt = require('jsonwebtoken')
 
 const verifyAdmin = (req, res, next) => {
     const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        res.status(401).send({
+            message: 'Unauthorized'
+        })
+        return;
+    }
     const token = authHeader.substring(7);
     console.log('token', token)
     if (req.originalUrl === '/logout' || !token) {
@@ -14,7 +20,7 @@ const verifyAdmin = (req, res, next) => {
                 console.log("err")
                 throw new Error("Token is invalid!")
             }
-
+            console.log(decoded)
             const user = await UserModel.findOne({username: decoded.username}).exec();
             if (user.roleId !== UserRole.Admin) {
                 res.status(401).send({

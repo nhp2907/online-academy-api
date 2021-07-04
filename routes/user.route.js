@@ -22,12 +22,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({storage: storage});
 
-router.get('/', async (req, res) => {
-    const criteria = req.params;
-    const users = await UserModel.find(criteria).where("roleId").ne(UserRole.Admin).exec();
-    res.send(users);
-})
-
 router.post('/', async (req, res) => {
     const body = req.body;
     try {
@@ -47,7 +41,7 @@ router.post('/', async (req, res) => {
 
 })
 
-router.put('/:id', async (req, res) => {
+router.put('/', async (req, res) => {
     const updateUser = req.body;
     delete updateUser.roleId;
     delete updateUser.role;

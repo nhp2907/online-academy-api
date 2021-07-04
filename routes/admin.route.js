@@ -11,6 +11,12 @@ const CourseModel = require("../schemas/course.schema");
 const CategoryService = require('../services/category.service')
 
 //region User
+router.get('/user', async (req, res) => {
+    const criteria = req.params;
+    const users = await UserModel.find(criteria).where("roleId").ne(UserRole.Admin).exec();
+    res.send(users);
+})
+
 router.post('/user', async (req, res) => {
     const body = req.body;
     try {
