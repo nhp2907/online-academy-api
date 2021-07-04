@@ -9,19 +9,28 @@ const UserRole = require("../constant/UserRole");
 const CategoryModel = require("../schemas/category.schema");
 const CourseModel = require("../schemas/course.schema");
 const CategoryService = require('../services/category.service')
+const {signup} = require("../services/auth.service");
 
 //region User
 router.get('/user', async (req, res) => {
     const criteria = req.params;
-    const users = await UserModel.find(criteria).where("roleId").ne(UserRole.Admin).exec();
+    const users = await UserModel.find(criteria).where("roleId").ne(UserRole.Admin)
+        .where('deleted').ne(true)
+        .exec();
     res.send(users);
 })
 
+// create for instructor only
 router.post('/user', async (req, res) => {
     const body = req.body;
     try {
-        const newUser = await UserModel.create(body);
-        res.send(newUser);
+        body.password = body.password || `${body.username}148nac`;
+        body.roleId = body.roleId || UserRole.Student;
+        body.role = body.roleId === 2 ? 'Student' : 'Instructor';
+        const user = await signup(body);
+        // const newUser = await UserModel.updateOne({_id: user.id}, {role: UserRole[UserRole.Instructor], roleId: UserRole.Instructor});
+        console.log('neew user', user)
+        res.send(user);
     } catch (err) {
         if (err instanceof ValidationError) {
             console.log('create course error: ', err);
@@ -30,7 +39,9 @@ router.post('/user', async (req, res) => {
                 message: err.message
             })
         } else {
-            throw err;
+            res.status(400).send({
+                message: err.message
+            })
         }
     }
 
@@ -52,7 +63,7 @@ router.put('/user', async (req, res) => {
 router.delete('/user/:userId', async (req, res) => {
     const userId = req.params.userId;
     try {
-        await UserModel.updateOne({_id: userId}, {status: false});
+        await UserModel.updateOne({_id: userId}, {deleted: true});
         res.send({message: 'Ok'});
     } catch (err) {
         res.status(400).send({
