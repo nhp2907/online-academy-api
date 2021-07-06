@@ -23,5 +23,5 @@ const courseReview = new Schema({
     },
 }, {timestamps: true}).plugin(mongoJson)
 
-const CourseReviewModel = mongoose.model('CourseChapter', courseReview);
+const CourseReviewModel = mongoose.model('Course_Review', courseReview);
 module.exports = CourseReviewModel;

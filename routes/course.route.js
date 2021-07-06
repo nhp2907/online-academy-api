@@ -9,6 +9,7 @@ const fs = require('fs');
 const CourseVideoModel = require("../schemas/course-video.schema");
 const CategoryModel = require("../schemas/category.schema");
 const InstructorModel = require("../schemas/instructor.schema");
+const CourseReviewModel = require("../schemas/course-review.schema");
 const {verifyJwt} = require("../middleware/user.middleware");
 const {verifyInstructor} = require("../middleware/user.middleware");
 const {apiUrl} = require("../constant/configs");
@@ -113,7 +114,7 @@ router.post('/', verifyJwt, verifyInstructor, async (req, res) => {
 })
 
 // update course
-router.put('/', async (req, res) => {
+router.put('/', verifyJwt, verifyInstructor, async (req, res) => {
     try {
         const dto = req.body;
         console.log('update course dto: ', dto);
@@ -142,7 +143,7 @@ router.put('/', async (req, res) => {
 })
 
 // upload image only
-router.post('/:id/image', uploadCourseImage.single('image'), async (req, res) => {
+router.post('/:id/image', verifyJwt, verifyInstructor, uploadCourseImage.single('image'), async (req, res) => {
     const file = req.file;
     if (!file) {
         res.status(400).send({
@@ -182,12 +183,12 @@ router.get('/:id/image', async (req, res) => {
 //region Course Chapter
 
 // create new chapter
-router.post('/:courseId/chapter', async (req, res) => {
+router.post('/:courseId/chapter', verifyJwt, verifyInstructor, async (req, res) => {
     const courseId = req.params.courseId;
     const chapter = req.body;
     chapter.courseId = courseId;
     try {
-        const newChapter = CourseChapterModel.create(chapter);
+        const newChapter = await CourseChapterModel.create(chapter);
         res.send(newChapter);
     } catch (err) {
         if (err instanceof ValidationError) {
@@ -203,7 +204,7 @@ router.post('/:courseId/chapter', async (req, res) => {
 })
 
 // update chapter
-router.put('/:courseId/chapter', async (req, res) => {
+router.put('/:courseId/chapter', verifyJwt, verifyInstructor, async (req, res) => {
     const chapter = req.body;
     try {
         const newChapter = await CourseChapterModel.updateOne({_id: chapter.id}, chapter).exec();
@@ -228,7 +229,7 @@ router.get('/:courseId/chapter', async (req, res) => {
 })
 
 // delete chapter
-router.delete('/:courseId/chapter/:chapterId', async (req, res) => {
+router.delete('/:courseId/chapter/:chapterId', verifyJwt, verifyInstructor, async (req, res) => {
     const chapterId = req.params.chapterId;
     try {
         const newChapter = await CourseChapterModel.deleteOne({_id: chapterId}).exec();
@@ -259,7 +260,7 @@ router.get('/:courseId/chapter/:chapterId/video/:videoId/stream', async (req, re
     })
 })
 
-router.post('/:courseId/chapter/:chapterId/video', uploadCourseVideo.single('file'), async (req, res) => {
+router.post('/:courseId/chapter/:chapterId/video', verifyJwt, verifyInstructor, uploadCourseVideo.single('file'), async (req, res) => {
     const file = req.file;
     console.log(
         file
@@ -293,7 +294,7 @@ router.post('/:courseId/chapter/:chapterId/video', uploadCourseVideo.single('fil
 })
 
 // update video
-router.put('/:courseId/chapter/:chapterId/video', async (req, res) => {
+router.put('/:courseId/chapter/:chapterId/video', verifyJwt, verifyInstructor, async (req, res) => {
     const chapter = req.body;
     try {
         const newChapter = CourseChapterModel.updateOne({_id: chapter.id}, chapter);
@@ -311,7 +312,7 @@ router.put('/:courseId/chapter/:chapterId/video', async (req, res) => {
     }
 })
 
-router.delete('/:courseId/chapter/:chapterId/video/:videoId', async (req, res) => {
+router.delete('/:courseId/chapter/:chapterId/video/:videoId', verifyJwt, verifyInstructor, async (req, res) => {
     try {
         const deleteRes = await CourseVideoModel.deleteOne({_id: req.params.videoId}).exec()
         res.send(deleteRes);
@@ -324,13 +325,65 @@ router.delete('/:courseId/chapter/:chapterId/video/:videoId', async (req, res) =
 
 //region Reviews
 router.get('/:courseId/review', async (req, res) => {
-
+    const query = req.query;
+    const limit = parseInt(query.limit);
+    delete query.limit
+    console.log(query);
+    try {
+        const reviews = await CourseReviewModel.find({...query, courseId: req.params.courseId})
+            .populate('userId')
+            .sort({createdAt: -1})
+            .limit(limit || 10).exec();
+        const result = reviews.map(r => r.toJSON()).map(r => ({
+            ...r,
+            userName: `${r.userId.firstName} ${r.userId.lastName}`,
+            userImage: r.userId.image,
+            userId: r.userId.id
+        }))
+        res.send(result)
+    } catch (err) {
+        res.status(400).send({message: err.message})
+    }
 })
 
 router.post('/:courseId/review', async (req, res) => {
+    // todo: check own course to review
+    const courseId = req.params.courseId
+    const review = req.body;
+    try {
+        const oldNumReviews = await CourseReviewModel.find({courseId}).count().exec();
+        const course = await CourseModel.findOne({_id: courseId}).exec();
+        const newRating = (course.rating * oldNumReviews + review.rating) / (oldNumReviews + 1);
+        CourseModel.updateOne({_id: courseId}, {rating: newRating}).exec().then(r => {
+        });
 
+        const newReview = await CourseReviewModel.create(review);
+        res.send(newReview);
+
+        // update rating
+
+    } catch (err) {
+        console.log(err);
+        res.status(400).send(err.message);
+    }
 })
 
 //endregion
+
+router.get('/:id/feedback', async (req, res) => {
+    const id = req.params.id;
+    const numReview = await CourseReviewModel.find({courseId: id}).count().exec();
+    const arr = [5, 4, 3, 2, 1];
+    const promises = arr.map(v => CourseReviewModel.find({courseId: id, rating: v}).count().exec())
+    const reviewCount = await Promise.all(promises);
+    const percents = reviewCount.map(c => c * 100 / numReview);
+    console.log('percent', percents);
+    const course = await CourseModel.findOne({_id: id}).exec();
+    res.send({
+        percents,
+        numReview,
+        rating: course.rating
+    })
+})
 
 module.exports = router;
