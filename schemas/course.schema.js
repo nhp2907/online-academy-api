@@ -21,6 +21,14 @@ const courseSchema = new Schema({
     image: {
         type: String
     },
+    author: {
+        type: String,
+        required: true
+    },
+    categoryName: {
+        type: String,
+        required: true
+    },
     concurrency: String,
     price: {
         type: Number,

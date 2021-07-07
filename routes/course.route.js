@@ -84,18 +84,40 @@ router.get('/search', async (req, res) => {
     res.send(courses)
 })
 
+router.get('/:id/related', async (req, res) => {
+    console.log('related')
+    const course = await CourseModel.findById(req.params.id).exec();
+   const relatedCourse = await CourseModel.find({categoryId: course.categoryId})
+       .sort({createdAt: -1})
+       .limit(5)
+       .exec();
+
+    res.send(relatedCourse)
+})
+
 // create course
 router.post('/', verifyJwt, verifyInstructor, async (req, res) => {
     try {
         const dto = req.body;
         console.log('create course dto: ', dto);
         // check instructor
-        const instructor = InstructorModel.findOne({_id: dto.instructorId})
+        const instructor = await InstructorModel.findOne({_id: dto.instructorId})
         if (!instructor) {
             res.status(400).send({
                 message: "Instructor not found!"
             })
         }
+        const user = await UserModel.findOne({_id: instructor.userId}).exec();
+        dto.author = `${user.firstName} ${user.lastName}`
+
+        // check category
+        const cate = await CategoryModel.findOne({_id: dto.categoryId}).exec();
+        if (!cate) {
+            res.status(400).send({
+                message: "Category not found"
+            })
+        }
+        dto.categoryName = cate.name;
 
         const course = await CourseModel.create(dto);
         console.log('create course result: ', course);
@@ -337,6 +359,8 @@ router.get('/:courseId/review', async (req, res) => {
         const result = reviews.map(r => r.toJSON()).map(r => ({
             ...r,
             userName: `${r.userId.firstName} ${r.userId.lastName}`,
+            userFirstName: r.userId.firstName,
+            userLastName: r.userId.lastName,
             userImage: r.userId.image,
             userId: r.userId.id
         }))
@@ -354,7 +378,7 @@ router.post('/:courseId/review', async (req, res) => {
         const oldNumReviews = await CourseReviewModel.find({courseId}).count().exec();
         const course = await CourseModel.findOne({_id: courseId}).exec();
         const newRating = (course.rating * oldNumReviews + review.rating) / (oldNumReviews + 1);
-        CourseModel.updateOne({_id: courseId}, {rating: newRating}).exec().then(r => {
+        CourseModel.updateOne({_id: courseId}, {rating: newRating, numReview: oldNumReviews + 1}).exec().then(r => {
         });
 
         const newReview = await CourseReviewModel.create(review);
