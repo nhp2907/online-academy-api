@@ -9,7 +9,9 @@ const multer = require('multer')
 const UserModel = require("../schemas/user.schema");
 const UserRole = require("../constant/UserRole");
 const CourseModel = require("../schemas/course.schema");
-const USER_IMAGE_PATH = "public/assets/images/users/";
+const {PROJECT_DIR} = require("../setting");
+const {apiUrl} = require("../constant/configs");
+const USER_IMAGE_PATH = "public/user/image";
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -60,8 +62,36 @@ router.put('/', async (req, res) => {
     }
 })
 
-router.post('/update-avatar', upload.single('avatar'), async (req, res) => {
+router.post('/:id/image', upload.single('image'), async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        res.status(400).send({
+            message: 'Image not found!'
+        })
+        return;
+    }
+    try {
+        const userId = req.params.id;
+        const user = await UserModel.findOne({_id: userId}).exec();
+        const oldImagePath = user.imagePath;
+        const newImageUrl = apiUrl + file.path.replace('public', '').split("\\").join("/");
+        const updateResult = await UserModel.updateOne(
+            {_id: userId},
+            {image: newImageUrl, imagePath: file.path}, {upsert: true});
 
+        res.send(updateResult)
+        if (oldImagePath) {
+            console.log('remvoe file path: ', oldImagePath)
+            fs.rmSync(oldImagePath, {
+                force: true
+            })
+        }
+    } catch (err) {
+        res.status(400).send({
+            code: 400,
+            message: err.message
+        })
+    }
 })
 
 router.post('/update-password', async (req, res) => {
