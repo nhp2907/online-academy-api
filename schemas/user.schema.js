@@ -37,7 +37,12 @@ const userSchema = new Schema({
    deleted: {
        type: Boolean,
        default: false
-   }
+   },
+   watchList: [{
+       type: mongoose.Schema.Types.ObjectId, ref: 'Course',
+       default: []
+   }],
+
 }, {timestamps: true}).plugin(mongoJson)
 
 const UserModel = mongoose.model('User', userSchema);

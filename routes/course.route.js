@@ -220,7 +220,7 @@ router.post('/:courseId/chapter', verifyJwt, verifyInstructor, async (req, res) 
                 message: err.message
             })
         } else {
-            throw err;
+            throw err;co
         }
     }
 })

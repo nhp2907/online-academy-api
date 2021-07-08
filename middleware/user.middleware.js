@@ -5,6 +5,11 @@ const jwt = require('jsonwebtoken')
 
 const verifyJwt = (req, res, next) => {
     const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        res.status(401).send({
+            message: 'Token not found'
+        })
+    }
     const token = authHeader.substring(7);
     if (req.originalUrl === '/logout' || !token) {
         next();

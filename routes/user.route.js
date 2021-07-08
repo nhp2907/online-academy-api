@@ -8,6 +8,7 @@ const router = express.Router();
 const multer = require('multer')
 const UserModel = require("../schemas/user.schema");
 const UserRole = require("../constant/UserRole");
+const CourseModel = require("../schemas/course.schema");
 const USER_IMAGE_PATH = "public/assets/images/users/";
 
 const storage = multer.diskStorage({
@@ -21,6 +22,10 @@ const storage = multer.diskStorage({
 })
 
 const upload = multer({storage: storage});
+
+router.get('/me', async (req, res) => {
+    res.send(res.locals.user);
+})
 
 router.post('/', async (req, res) => {
     const body = req.body;
@@ -72,6 +77,58 @@ router.post('/update-password', async (req, res) => {
     } else {
         res.status(401).send({
             message: "Incorrect password"
+        })
+    }
+})
+
+router.get('/:id/watch-list', async (req, res) => {
+    const me = await UserModel.findById(req.params.id)
+    try {
+        const courses = await CourseModel.find({_id: {$in: me.watchList}});
+        res.send(courses)
+    } catch (err) {
+        res.status(400).send({
+            message: err.message
+        })
+    }
+})
+
+router.post('/:id/watch-list', async (req, res) => {
+    const body = req.body;
+    try {
+        const user = await UserModel.findById(req.params.id).exec();
+        if (user.watchList.includes(body.courseId)) {
+            res.status(400).send({
+                message: 'This course already in watch list!'
+            })
+        }
+        user.watchList.push(body.courseId);
+        const saveResult = await user.save();
+        res.send(saveResult)
+    } catch (err) {
+        res.status(400).send({
+            message: err.message
+        })
+    }
+})
+
+router.delete('/:id/watch-list/:courseId', async (req, res) => {
+    const courseId = req.params.courseId;
+    try {
+        const user = await UserModel.findById(req.params.id).exec();
+        const index = user.watchList.findIndex(cid => cid !== courseId)
+
+        if (index === -1) {
+            res.status(400).send({message: 'Course not found in Watch list'});
+            return;
+        }
+
+        user.watchList.splice(index, 1);
+        const saveResult = await user.save();
+        res.send(saveResult)
+    } catch (err) {
+        res.status(400).send({
+            message: err.message
         })
     }
 })
