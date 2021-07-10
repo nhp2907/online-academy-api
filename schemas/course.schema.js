@@ -47,7 +47,12 @@ const courseSchema = new Schema({
     status: String,
     estimateContentLength: Number,
     numStudentEnroll: Number,
-    views: Number
+    views: Number,
+    published: {
+        type: Boolean,
+        required: true,
+        default: false,
+    }
 }, {timestamps: true}).plugin(mongoJson)
 
 const CourseModel = mongoose.model('Course', courseSchema);

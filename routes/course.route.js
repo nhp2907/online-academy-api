@@ -140,6 +140,21 @@ router.put('/', verifyJwt, verifyInstructor, async (req, res) => {
     try {
         const dto = req.body;
         console.log('update course dto: ', dto);
+        const findCourse = await CourseModel.findOne({_id: dto.id}).exec();
+        if (!findCourse) {
+            res.status(400).send({
+                message: "Course not found!"
+            })
+            return;
+        }
+
+        // if (findCourse.published) {
+        //     res.status(400).send({
+        //         message: "Can not edit published course!"
+        //     })
+        //     return;
+        // }
+
         // check instructor
         const instructor = UserModel.findOne({_id: dto.instructorId, roleId: UserRole.Instructor, deleted: {$ne: true}})
         if (!instructor) {
@@ -148,9 +163,8 @@ router.put('/', verifyJwt, verifyInstructor, async (req, res) => {
             })
         }
 
-        const course = await CourseModel.updateOne({_id: dto.id}, dto);
-        console.log(course);
-        res.send(course)
+        const updateResult = await CourseModel.updateOne({_id: dto.id}, dto);
+        res.send(updateResult)
     } catch (err) {
         if (err instanceof ValidationError) {
             console.log(err);
@@ -409,6 +423,47 @@ router.get('/:id/feedback', async (req, res) => {
         numReview,
         rating: course.rating
     })
+})
+
+router.post('/publish', verifyJwt, verifyInstructor, async (req, res) => {
+    const {id} = req.body;
+    try {
+        const course = await CourseModel.findOne({_id: id, deleted: {$ne: true}}).exec()
+        if (!course) {
+            res.status(400).send({message: 'Course not found'});
+            return;
+        }
+
+        const courseVideos = await CourseVideoModel.find({courseId: id}).exec();
+        if (courseVideos.length === 0) {
+            res.status(400).send({message: 'Publish course must have chapters, videos on it'});
+            return;
+        }
+        await CourseModel.updateOne({_id: id}, {published: true});
+        res.send({message: 'success'})
+    } catch (err) {
+        res.status(400).send({message: err.message});
+    }
+})
+
+router.get('/:id/can-publish', verifyJwt, verifyInstructor, async (req, res) => {
+    const {id} = req.params;
+    try {
+        const course = await CourseModel.findOne({_id: id, deleted: {$ne: true}}).exec()
+        if (!course) {
+            res.status(400).send({message: 'Course not found'});
+            return;
+        }
+
+        const courseVideos = await CourseVideoModel.find({courseId: id}).exec();
+        if (courseVideos.length === 0) {
+            res.send({canPublish: false});
+        } else {
+            res.send({canPublish: true});
+        }
+    } catch (err) {
+        res.status(400).send({message: err.message});
+    }
 })
 
 module.exports = router;
