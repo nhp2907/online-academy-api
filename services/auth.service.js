@@ -37,7 +37,10 @@ const signup = async (user) => {
 const login = async (username, password) => {
     console.log(username, password);
     try {
-        const user = await UserModel.findOne({username}).exec();
+        const user = await UserModel.findOne({username, deleted: {$ne: true}}).exec();
+        if (!user) {
+
+        }
         console.log(user);
         if (user && bcrypt.compareSync(password, user.password)) {
             return jwt.sign({username}, process.env.JWT_SECRET_KEY);

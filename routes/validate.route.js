@@ -22,4 +22,18 @@ router.get('/user', async (req, res) => {
     res.send({isOk: true});
 })
 
+router.get('/user/email', async (req, res) => {
+    console.log('validate user email except id')
+    const {email, id} = req.query;
+
+    const users = await UserModel.find({email, _id: {$ne: id}}).exec();
+
+    if (users.length > 0) {
+        res.send({isOk: false})
+        return;
+    }
+
+    res.send({isOk: true});
+})
+
 module.exports = router;

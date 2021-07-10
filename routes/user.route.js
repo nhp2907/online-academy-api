@@ -50,8 +50,21 @@ router.post('/', async (req, res) => {
 
 router.put('/', async (req, res) => {
     const updateUser = req.body;
+    const {id, email} = updateUser;
+
+    if (email) {
+        const user = await UserModel.findOne({email}).exec();
+        if (user && user.id !== id) {
+            res.status(400).send({
+                message: `Email ${email} already taken`
+            })
+            return;
+        }
+    }
+
     delete updateUser.roleId;
     delete updateUser.role;
+    delete updateUser.username; // username is not readonly
     try {
         await UserModel.updateOne({_id: updateUser.id}, updateUser, {upsert: true});
         res.send(updateUser);
@@ -72,7 +85,13 @@ router.post('/:id/image', upload.single('image'), async (req, res) => {
     }
     try {
         const userId = req.params.id;
-        const user = await UserModel.findOne({_id: userId}).exec();
+        const user = await UserModel.findOne({_id: userId, deleted: {$ne: true}}).exec();
+        if (!user) {
+            res.status(400).send({
+                message: 'User not found'
+            })
+            return;
+        }
         const oldImagePath = user.imagePath;
         const newImageUrl = apiUrl + file.path.replace('public', '').split("\\").join("/");
         const updateResult = await UserModel.updateOne(
@@ -94,19 +113,15 @@ router.post('/:id/image', upload.single('image'), async (req, res) => {
     }
 })
 
-router.post('/update-password', async (req, res) => {
+router.post('/:id/change-password', async (req, res) => {
     const {oldPassword, newPassword} = req.body
     console.log(req.body);
-    // validate if need
-    const token = await UserService.updatePassword(res.locals.user.id, oldPassword, newPassword);
-    console.log('update password new token: ', token);
-    if (token != null) {
-        res.send({
-            message: 'success'
-        })
-    } else {
-        res.status(401).send({
-            message: "Incorrect password"
+    try {
+        const updateResult = await UserService.updatePassword(req.params.id, oldPassword, newPassword);
+        res.send(updateResult)
+    } catch (err) {
+        res.status(400).send({
+            message: err.message
         })
     }
 })

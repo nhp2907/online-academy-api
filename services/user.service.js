@@ -12,21 +12,22 @@ const UserModel = require('./../schemas/user.schema')
 async function updatePassword(userId, oldPass, newPass) {
     const user = await UserModel.findById(userId);
     if (!user) {
-        throw new Error("user not found");
+        throw new Error("User not found");
     }
     if (bcrypt.compareSync(oldPass, user.password)) {
+        if (bcrypt.compareSync(newPass, user.password)) {
+            throw new Error("New password is recently used")
+        }
+
         const pHash = util.promisify(bcrypt.hash);
         const hashedPassword = await pHash(newPass, 10);
-        // bcrypt.hash(newPass, 10, (err, hashedPassword) => {
         user.password = hashedPassword;
         console.log('update password new hashedPassword', hashedPassword);
-        await UserModel.updateOne({_id: userId}, {user})
+        await UserModel.updateOne({_id: userId}, {password: hashedPassword})
         return jwt.sign({username: user.username}, process.env.JWT_SECRET_KEY);
-        // })
 
     } else {
-        console.log('wrong password')
-        return null
+        throw new Error("Password is incorrect!");
     }
 }
 

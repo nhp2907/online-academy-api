@@ -27,8 +27,20 @@ router.get('/:id', async (req, res) => {
 
 router.get('/:id/detail', async (req, res) => {
     const instructor = await InstructorModel.findOne({_id: req.params.id}).exec();
-    const user = await UserModel.findOne({_id: instructor.userId}).exec();
-    // console.log('user', user);
+    const user = await UserModel.findOne({_id: instructor.userId, deleted: {$ne: true}}).exec();
+    if (!user) {
+        res.status(400).send({
+            message: 'User not found'
+        })
+        return;
+    }
+    if (!user.status) {
+        res.status(400).send({
+            message: 'Account is disabled'
+        })
+        return;
+    }
+
     const detail = {...user.toJSON(), ...instructor.toJSON(), id: instructor.toJSON().id};
     console.log(detail);
     res.send(detail);

@@ -87,10 +87,10 @@ router.get('/search', async (req, res) => {
 router.get('/:id/related', async (req, res) => {
     console.log('related')
     const course = await CourseModel.findById(req.params.id).exec();
-   const relatedCourse = await CourseModel.find({categoryId: course.categoryId})
-       .sort({createdAt: -1})
-       .limit(5)
-       .exec();
+    const relatedCourse = await CourseModel.find({categoryId: course.categoryId})
+        .sort({createdAt: -1})
+        .limit(5)
+        .exec();
 
     res.send(relatedCourse)
 })
@@ -107,7 +107,7 @@ router.post('/', verifyJwt, verifyInstructor, async (req, res) => {
                 message: "Instructor not found!"
             })
         }
-        const user = await UserModel.findOne({_id: instructor.userId}).exec();
+        const user = await UserModel.findOne({_id: instructor.userId, deleted: {$ne: true}}).exec();
         dto.author = `${user.firstName} ${user.lastName}`
 
         // check category
@@ -141,7 +141,7 @@ router.put('/', verifyJwt, verifyInstructor, async (req, res) => {
         const dto = req.body;
         console.log('update course dto: ', dto);
         // check instructor
-        const instructor = UserModel.findOne({_id: dto.instructorId, roleId: UserRole.Instructor})
+        const instructor = UserModel.findOne({_id: dto.instructorId, roleId: UserRole.Instructor, deleted: {$ne: true}})
         if (!instructor) {
             res.status(400).send({
                 message: "Instructor not found!"
@@ -220,7 +220,8 @@ router.post('/:courseId/chapter', verifyJwt, verifyInstructor, async (req, res) 
                 message: err.message
             })
         } else {
-            throw err;co
+            throw err;
+            co
         }
     }
 })

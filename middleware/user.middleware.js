@@ -20,7 +20,10 @@ const verifyJwt = (req, res, next) => {
                 throw new Error("Token is invalid!")
             }
 
-            const user = await UserModel.findOne({username: decoded.username}).exec();
+            const user = await UserModel.findOne({username: decoded.username, deleted: {$ne: true}}).exec();
+            if (!user) {
+                res.static(400).send({message: 'User not found'})
+            }
             delete user.password;
             console.log('user', user);
             res.locals.user = user.toJSON();

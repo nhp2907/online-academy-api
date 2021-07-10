@@ -39,15 +39,19 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res, next) => {
     const {username, password} = req.body;
     const token = await AuthService.login(username, password);
-    console.log('token: ', token);
     if (token == null) {
         res.status(401).send({
             message: "Incorrect username or password!"
         })
     }
-    const user = await UserModel.findOne({username});
+    const user = await UserModel.findOne({username, deleted: {$ne: true}});
+    if (!user.status) {
+        res.status(400).send({
+            message: 'Account is disabled'
+        })
+        return;
+    }
     delete user.password;
-    console.log(user.toJSON());
     res.send({
         token: token,
         user: user.toJSON()
