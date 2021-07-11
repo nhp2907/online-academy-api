@@ -73,8 +73,6 @@ router.get('/search', async (req, res) => {
 router.get('/:id', async (req, res) => {
     const id = req.params.id
     const course = await CourseModel.findOne({_id: id}).exec();
-
-    console.log('course by id', course);
     res.send(course)
 })
 
@@ -463,6 +461,21 @@ router.get('/:id/can-publish', verifyJwt, verifyInstructor, async (req, res) => 
         }
     } catch (err) {
         res.status(400).send({message: err.message});
+    }
+})
+
+router.put('/:id/plusView', async (req, res) => {
+    const {id} = req.params;
+    try {
+        const course = await CourseModel.findOne({_id: id});
+        if (!course) {
+            res.status(400).send({message: "Course not found"})
+            return;
+        }
+        const updateResult = await CourseModel.updateOne({_id: id}, {views: course.views + 1})
+        res.send(updateResult);
+    } catch (err) {
+        res.status(400).send({message: err.message})
     }
 })
 

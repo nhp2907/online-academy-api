@@ -47,7 +47,10 @@ const courseSchema = new Schema({
     status: String,
     estimateContentLength: Number,
     numStudentEnroll: Number,
-    views: Number,
+    views: {
+        type: Number,
+        default: 0
+    },
     published: {
         type: Boolean,
         required: true,

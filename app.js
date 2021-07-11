@@ -3,7 +3,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
-require('./models/relation-mapping');
+// require('./models/relation-mapping');
 require('./models/mongodb');
 const {verifyAdmin, verifyJwt, verifyInstructor} = require('./middleware/user.middleware')
 const cors = require('cors');
