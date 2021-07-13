@@ -10,6 +10,7 @@ const CourseVideoModel = require("../schemas/course-video.schema");
 const CategoryModel = require("../schemas/category.schema");
 const InstructorModel = require("../schemas/instructor.schema");
 const CourseReviewModel = require("../schemas/course-review.schema");
+const InvoiceModel = require("../schemas/invoice.schema");
 const {verifyJwt} = require("../middleware/user.middleware");
 const {verifyInstructor} = require("../middleware/user.middleware");
 const {apiUrl} = require("../constant/configs");
@@ -288,8 +289,14 @@ router.get('/:courseId/chapter/:chapterId/video', async (req, res) => {
 
 router.get('/:courseId/chapter/:chapterId/video/:videoId/stream', async (req, res) => {
     // todo: check course belong to user
-    const video = await CourseVideoModel.findOne({_id: req.params.videoId}).exec();
+    const {videoId, courseId} = req.params
+    const invoice = InvoiceModel.find({userId: res.locals.user, courseId}).exec();
+    if (!invoice) {
+        res.status(400).send({message: 'Invoice not found'});
+        return;
+    }
 
+    const video = await CourseVideoModel.findOne({_id: videoId}).exec();
     res.sendFile(PROJECT_DIR + '\\' + video.videoUrl, {}, (a) => {
 
     })

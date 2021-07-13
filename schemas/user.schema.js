@@ -48,6 +48,10 @@ const userSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId, ref: 'Course',
         default: []
     }],
+    myLearningList: [{
+        type: mongoose.Schema.Types.ObjectId, ref: 'Invoice',
+        default: []
+    }],
 
 }, {timestamps: true}).plugin(mongoJson)
 

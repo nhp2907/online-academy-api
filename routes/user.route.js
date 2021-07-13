@@ -9,6 +9,7 @@ const multer = require('multer')
 const UserModel = require("../schemas/user.schema");
 const UserRole = require("../constant/UserRole");
 const CourseModel = require("../schemas/course.schema");
+const InvoiceModel = require("../schemas/invoice.schema");
 const {PROJECT_DIR} = require("../setting");
 const {apiUrl} = require("../constant/configs");
 const USER_IMAGE_PATH = "public/user/image";
@@ -177,5 +178,43 @@ router.delete('/:id/watch-list/:courseId', async (req, res) => {
         })
     }
 })
+
+router.post('/buy-course', async (req, res) => {
+    const dto = req.body;
+
+    const authUser = res.locals.user
+    try {
+        const user = await UserModel.findOne({_id: authUser.id}).exec();
+        if (!user) {
+            res.status(400).send({
+                message: "User not found!"
+            })
+            return;
+        }
+
+        const course = await CourseModel.findOne({_id: dto.courseId}).exec();
+
+        if (!course) {
+            res.status(400).send({
+                message: "Course not found!"
+            })
+
+            return;
+        }
+
+        dto.price = course.price;
+        const invoice = await InvoiceModel.create(dto);
+
+        user.myLearningList.push(dto.courseId)
+        await user.save();
+
+        res.send(invoice);
+    } catch (err) {
+        res.status(400).send({
+            message: err.message
+        })
+    }
+})
+
 
 module.exports = router;
