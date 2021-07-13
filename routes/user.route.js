@@ -139,6 +139,25 @@ router.get('/:id/watch-list', async (req, res) => {
     }
 })
 
+router.get('/:id/my-learning-list', async (req, res) => {
+    const me = await UserModel.findById(req.params.id)
+    if (me.id !== res.locals.user.id) {
+        res.status(400).send({
+            message: 'Unauthorized'
+        })
+        return;
+    }
+
+    try {
+        const courses = await CourseModel.find({_id: {$in: me.myLearningList}});
+        res.send(courses)
+    } catch (err) {
+        res.status(400).send({
+            message: err.message
+        })
+    }
+})
+
 router.post('/:id/watch-list', async (req, res) => {
     const body = req.body;
     try {
@@ -184,7 +203,7 @@ router.post('/buy-course', async (req, res) => {
 
     const authUser = res.locals.user
     try {
-        const user = await UserModel.findOne({_id: authUser.id}).exec();
+        const user = await UserModel.findById(authUser.id).exec();
         if (!user) {
             res.status(400).send({
                 message: "User not found!"

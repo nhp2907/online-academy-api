@@ -7,6 +7,7 @@ require('dotenv').config();
 require('./models/mongodb');
 const {verifyAdmin, verifyJwt, verifyInstructor} = require('./middleware/user.middleware')
 const cors = require('cors');
+const {verifyInvoice} = require("./middleware/learning.middleware");
 
 const app = express();
 app.use(cors())
@@ -25,6 +26,7 @@ app.use('/api/public/instructor', require('./routes/instructor-public.route'));
 app.use('/api/admin',verifyJwt, verifyAdmin, require('./routes/admin.route'));
 app.use('/api/category', require('./routes/category.route'))
 app.use('/api/course', require('./routes/course.route'))
+app.use('/api/learning', verifyJwt, verifyInvoice, require('./routes/learning.route'))
 // app.use('/error', require('./routes/error'));
 // app.use('/test', require('./routes/ test'));
 // app.use('/cart', require('./routes/cart'));
