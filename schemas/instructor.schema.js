@@ -22,6 +22,10 @@ const instructorSchema = new Schema({
         type: Number,
         default: 0
     },
+    brief: {
+        type:String,
+        default: ''
+    },
     status: {
         type: Boolean,
         default: true

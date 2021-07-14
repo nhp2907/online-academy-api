@@ -102,4 +102,25 @@ router.post('/update-password', async (req, res) => {
     }
 })
 
+router.put('/info', async (req, res) => {
+    const {id, brief} = req.body
+    try {
+        const instructor = await InstructorModel.findOne({_id: id}).exec()
+        if (!instructor) {
+            res.status(400).send({
+                message: 'Instructor not found'
+            })
+            return;
+        }
+
+        const updateResult = await instructor.update({brief}, {upsert: true}).exec();
+        res.send(updateResult)
+    } catch (err) {
+        res.status(400).send({
+            message: err.message
+        })
+    }
+
+})
+
 module.exports = router;

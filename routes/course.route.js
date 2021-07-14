@@ -11,6 +11,7 @@ const CategoryModel = require("../schemas/category.schema");
 const InstructorModel = require("../schemas/instructor.schema");
 const CourseReviewModel = require("../schemas/course-review.schema");
 const InvoiceModel = require("../schemas/invoice.schema");
+const {verifyInvoice} = require("../middleware/learning.middleware");
 const {verifyJwt} = require("../middleware/user.middleware");
 const {verifyInstructor} = require("../middleware/user.middleware");
 const {apiUrl} = require("../constant/configs");
@@ -57,16 +58,18 @@ router.get('/search', async (req, res) => {
     const kw = req.query.kw;
     console.log(kw);
     const result = [];
-    const cate = await CategoryModel.findOne({uniqueName: kw.toLowerCase()}).exec();
+    const cate = await CategoryModel.findOne({$text: {$search: kw}}).exec();
 
+    const courseFilter = {$text: {$search: kw}}
     if (cate) {
-        const coursesByCate = await CourseModel.find({categoryId: cate.id}).exec();
+        const coursesByCate = await CourseModel.find({categoryId: cate._id}).exec();
         result.push(...coursesByCate);
+        courseFilter.categoryId = {$ne: cate._id}
     }
 
-    const coursesSearch = await CourseModel.find({$text: {$search: kw}}).exec();
+    const coursesSearch = await CourseModel.find(courseFilter).exec();
     result.push(...coursesSearch);
-    console.log(result.length);
+    const unique = [...new Set(result.map(item => item._id))];
 
     res.send(result)
 })
@@ -371,8 +374,10 @@ router.get('/:courseId/review', async (req, res) => {
     const limit = parseInt(query.limit);
     delete query.limit
     console.log(query);
+    const {courseId} = req.params
+
     try {
-        const reviews = await CourseReviewModel.find({...query, courseId: req.params.courseId})
+        const reviews = await CourseReviewModel.find({courseId})
             .populate('userId')
             .sort({createdAt: -1})
             .limit(limit || 10).exec();
@@ -390,11 +395,50 @@ router.get('/:courseId/review', async (req, res) => {
     }
 })
 
-router.post('/:courseId/review', async (req, res) => {
-    // todo: check own course to review
-    const courseId = req.params.courseId
-    const review = req.body;
+router.get('/:courseId/review/by-user/:userId', async (req, res) => {
+    const {courseId, userId} = req.params
+
     try {
+        const r = await CourseReviewModel.findOne({courseId, userId})
+            .populate('userId')
+            .exec();
+
+        if (!r) {
+            res.status(404).send({
+                message: 'Review not found'
+            })
+            return;
+        }
+        const result = {
+            ...r.toJSON(),
+            userName: `${r.userId.firstName} ${r.userId.lastName}`,
+            userFirstName: r.userId.firstName,
+            userLastName: r.userId.lastName,
+            userImage: r.userId.image,
+            userId: r.userId.id
+        }
+        res.send(result)
+
+    } catch (err) {
+        res.status(400).send({message: err.message})
+    }
+})
+
+router.post('/:courseId/review', verifyJwt, verifyInvoice, async (req, res) => {
+    const review = req.body;
+    const {courseId, userId} = review
+
+    try {
+
+        const findReview = await CourseReviewModel.find({courseId, userId}).exec()
+        if (findReview.length > 0) {
+            res.status(400).send({
+                message: 'Already review this course'
+            })
+            return;
+        }
+
+
         const oldNumReviews = await CourseReviewModel.find({courseId}).count().exec();
         const course = await CourseModel.findOne({_id: courseId}).exec();
         const newRating = (course.rating * oldNumReviews + review.rating) / (oldNumReviews + 1);
@@ -405,6 +449,34 @@ router.post('/:courseId/review', async (req, res) => {
         res.send(newReview);
 
         // update rating
+
+    } catch (err) {
+        console.log(err);
+        res.status(400).send(err.message);
+    }
+})
+
+router.put('/:courseId/review', verifyJwt, verifyInvoice, async (req, res) => {
+    const review = req.body;
+    const {id, courseId, userId} = review
+    try {
+
+        const findReview = await CourseReviewModel.findOne({_id: id}).exec()
+        if (!findReview) {
+            res.status(400).send({
+                message: 'Review not found'
+            })
+            return;
+        }
+
+        const course = await CourseModel.findOne({_id: courseId}).exec()
+        const delta = course.rating - review.rating;
+        course.rating = course.rating + delta / course.numReview
+
+        const updateResult = await findReview.update(review);
+        await course.save();
+
+        res.send(updateResult);
 
     } catch (err) {
         console.log(err);

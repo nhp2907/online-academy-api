@@ -50,7 +50,13 @@ router.get('/user/:userId', async (req, res) => {
     console.log('instructor by userId', req.params);
     const instructor = await InstructorModel.findOne({userId: req.params.userId}).exec();
     console.log(instructor);
-    res.send(instructor);
+    if (!instructor) {
+        res.status(404).send({
+            message: 'Instructor not found'
+        })
+    } else {
+        res.send(instructor);
+    }
 })
 
 module.exports = router;
