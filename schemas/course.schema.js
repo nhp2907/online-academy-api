@@ -55,7 +55,15 @@ const courseSchema = new Schema({
         type: Boolean,
         required: true,
         default: false,
-    }
+    },
+    disabled: {
+        type: Boolean,
+        default: false,
+    },
+    deleted: {
+        type: Boolean,
+        default: false,
+    },
 }, {timestamps: true}).plugin(mongoJson)
 
 const CourseModel = mongoose.model('Course', courseSchema);

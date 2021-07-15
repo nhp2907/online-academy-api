@@ -141,4 +141,57 @@ router.delete('/category/:id', async (req, res) => {
 })
 //endregion
 
+//region Course
+
+router.get('/course', async (req, res) => {
+    const criteria = req.query
+    if (criteria.categoryName) {
+        const cate = await CategoryModel.findOne({uniqueName: criteria.categoryName.toLowerCase()}).exec();
+        delete criteria.categoryName
+        criteria.categoryId = cate._id
+    }
+    const course = await CourseModel.find(criteria)
+        .where('deleted').ne(true)
+        .exec();
+    console.log('courses', course);
+    res.send(course)
+})
+
+router.post('/disabled-course', async (req, res) => {
+    const {courseId} = req.body;
+    try {
+        const course = await CourseModel.findOne({_id: courseId}).exec();
+
+        if (!course) {
+            res.status(400).send({message: 'Course not found'});
+        }
+
+        course.disabled = !course.disabled;
+
+        const updateResult = await course.save({validateModifiedOnly: true});
+        res.send(updateResult);
+    } catch (err) {
+        res.status(400).send({message: err.message})
+    }
+})
+
+router.delete('/course/:courseId', async (req, res) => {
+    const {courseId} = req.params;
+    try {
+        const course = await CourseModel.findOne({_id: courseId}).exec();
+
+        if (!course) {
+            res.status(400).send({message: 'Course not found'});
+        }
+
+        course.deleted= true;
+
+        const updateResult = await course.save({validateModifiedOnly: true});
+        res.send(updateResult);
+    } catch (err) {
+        res.status(400).send({message: err.message})
+    }
+})
+//endregion
+
 module.exports = router;

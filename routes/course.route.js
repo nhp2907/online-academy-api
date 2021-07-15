@@ -49,7 +49,10 @@ router.get('/', async (req, res) => {
         delete criteria.categoryName
         criteria.categoryId = cate._id
     }
-    const course = await CourseModel.find(criteria).exec();
+    const course = await CourseModel.find(criteria)
+        .where('disabled').ne(true)
+        .where('deleted').ne(true)
+        .exec();
     console.log('courses', course);
     res.send(course)
 })
@@ -62,12 +65,18 @@ router.get('/search', async (req, res) => {
 
     const courseFilter = {$text: {$search: kw}}
     if (cate) {
-        const coursesByCate = await CourseModel.find({categoryId: cate._id}).exec();
+        const coursesByCate = await CourseModel.find({categoryId: cate._id})
+            .where('disabled').ne(true)
+            .where('deleted').ne(true)
+            .exec();
         result.push(...coursesByCate);
         courseFilter.categoryId = {$ne: cate._id}
     }
 
-    const coursesSearch = await CourseModel.find(courseFilter).exec();
+    const coursesSearch = await CourseModel.find(courseFilter)
+        .where('disabled').ne(true)
+        .where('deleted').ne(true)
+        .exec();
     result.push(...coursesSearch);
     const unique = [...new Set(result.map(item => item._id))];
 
@@ -77,12 +86,29 @@ router.get('/search', async (req, res) => {
 router.get('/:id', async (req, res) => {
     const id = req.params.id
     const course = await CourseModel.findOne({_id: id}).exec();
+    if (!course) {
+        res.status(404).send({
+            message: "Course not found"
+        })
+        return;
+    }
+
+    if (course.disabled || course.deleted) {
+        res.status(400).send({
+            message: "Course is not available"
+        })
+        return;
+    }
+
     res.send(course)
 })
 
 router.get('/search', async (req, res) => {
     const criteria = req.query
-    const courses = await CourseModel.find(criteria).exec();
+    const courses = await CourseModel.find(criteria)
+        .where('disabled').ne(true)
+        .where('deleted').ne(true)
+        .exec();
     res.send(courses)
 })
 
@@ -90,6 +116,8 @@ router.get('/:id/related', async (req, res) => {
     console.log('related')
     const course = await CourseModel.findById(req.params.id).exec();
     const relatedCourse = await CourseModel.find({categoryId: course.categoryId})
+        .where('disabled').ne(true)
+        .where('deleted').ne(true)
         .sort({createdAt: -1})
         .limit(5)
         .exec();

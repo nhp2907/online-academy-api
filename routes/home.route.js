@@ -9,19 +9,28 @@ const CourseModel = require("../schemas/course.schema");
 
 router.get('/top-course', async (req, res) => {
     const query = req.query;
-    const courses = await CourseModel.find({}).sort({updatedAt: -1, rating: -1}).limit(query.count || 3).exec();
+    const courses = await CourseModel.find({})
+        .where('disabled').ne(true)
+        .where('deleted').ne(true)
+        .sort({updatedAt: -1, rating: -1}).limit(query.count || 3).exec();
     res.send(courses)
 })
 
 router.get('/most-view-course', async (req, res) => {
     const query = req.query;
-    const courses = await CourseModel.find().sort({updatedAt: -1, views: -1}).limit(query.count || 10).exec();
+    const courses = await CourseModel.find()
+        .where('disabled').ne(true)
+        .where('deleted').ne(true)
+        .sort({updatedAt: -1, views: -1}).limit(query.count || 10).exec();
     res.send(courses)
 })
 
 router.get('/latest-course', async (req, res) => {
     const query = req.query;
-    const courses = await CourseModel.find().sort({updatedAt: -1}).limit(query.count || 10).exec();
+    const courses = await CourseModel.find()
+        .where('disabled').ne(true)
+        .where('deleted').ne(true)
+        .sort({updatedAt: -1}).limit(query.count || 10).exec();
     res.send(courses)
 })
 
