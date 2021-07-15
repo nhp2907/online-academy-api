@@ -7,6 +7,7 @@ const multer = require('multer')
 const UserModel = require("../schemas/user.schema");
 const UserRole = require("../constant/UserRole");
 const InstructorModel = require("../schemas/instructor.schema");
+const CourseModel = require("../schemas/course.schema");
 const USER_IMAGE_PATH = "public/assets/images/users/";
 
 const storage = multer.diskStorage({
@@ -39,14 +40,20 @@ router.get('/user/:userId', async (req, res) => {
     res.send(instructor);
 })
 
-router.put('/:id', async (req, res) => {
-    console.log('instructor detail')
-    const updateUser = req.body;
-    delete updateUser.roleId;
-    delete updateUser.role;
+router.put('/', async (req, res) => {
+    const body = req.body;
+    const {id} = body
     try {
-        await UserModel.updateOne({_id: updateUser.id}, updateUser, {upsert: true});
-        res.send(updateUser);
+        const instructor = await InstructorModel.findOne({_id: id}).exec()
+        if (!instructor) {
+            res.status(400).send({
+                message: 'Instructor not found'
+            })
+            return;
+        }
+
+        const updateResult = await instructor.update(body, {upsert: true}).exec();
+        res.send(updateResult)
     } catch (err) {
         res.status(400).send({
             message: err.message
@@ -100,27 +107,6 @@ router.post('/update-password', async (req, res) => {
             message: "Incorrect password"
         })
     }
-})
-
-router.put('/info', async (req, res) => {
-    const {id, brief} = req.body
-    try {
-        const instructor = await InstructorModel.findOne({_id: id}).exec()
-        if (!instructor) {
-            res.status(400).send({
-                message: 'Instructor not found'
-            })
-            return;
-        }
-
-        const updateResult = await instructor.update({brief}, {upsert: true}).exec();
-        res.send(updateResult)
-    } catch (err) {
-        res.status(400).send({
-            message: err.message
-        })
-    }
-
 })
 
 module.exports = router;

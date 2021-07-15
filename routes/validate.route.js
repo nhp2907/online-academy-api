@@ -10,6 +10,7 @@ router.get('/user', async (req, res) => {
         if (users.length > 0) {
             res.send({isOk: false})
             return;
+            
         }
 
     } else if (query.email) {

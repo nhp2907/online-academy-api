@@ -50,6 +50,7 @@ router.post('/', async (req, res) => {
 })
 
 router.put('/', async (req, res) => {
+    console.log('update user info')
     const updateUser = req.body;
     const {id, email} = updateUser;
 
@@ -67,8 +68,8 @@ router.put('/', async (req, res) => {
     delete updateUser.role;
     delete updateUser.username; // username is not readonly
     try {
-        await UserModel.updateOne({_id: updateUser.id}, updateUser, {upsert: true});
-        res.send(updateUser);
+        const updateResult = await UserModel.updateOne({_id: updateUser.id}, updateUser, {upsert: true}).exec();
+        res.send(updateResult);
     } catch (err) {
         res.status(400).send({
             message: err.message
@@ -217,7 +218,6 @@ router.post('/buy-course', async (req, res) => {
             res.status(400).send({
                 message: "Course not found!"
             })
-
             return;
         }
 
@@ -226,6 +226,9 @@ router.post('/buy-course', async (req, res) => {
 
         user.myLearningList.push(dto.courseId)
         await user.save();
+
+        course.numStudentEnroll = course.numStudentEnroll + 1;
+        await course.save();
 
         res.send(invoice);
     } catch (err) {
