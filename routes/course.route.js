@@ -53,7 +53,10 @@ router.get('/', async (req, res) => {
         .where('disabled').ne(true)
         .where('deleted').ne(true)
         .exec();
-    console.log('courses', course);
+    course.map(c => c.toJSON())
+        .map(c => {
+            console.log(typeof c.updatedAt);
+        })
     res.send(course)
 })
 
@@ -544,7 +547,7 @@ router.post('/publish', verifyJwt, verifyInstructor, async (req, res) => {
             res.status(400).send({message: 'Publish course must have chapters, videos on it'});
             return;
         }
-        await CourseModel.updateOne({_id: id}, {published: true});
+        await CourseModel.updateOne({_id: id}, {published: true, publishedDate: new Date()});
         res.send({message: 'success'})
     } catch (err) {
         res.status(400).send({message: err.message});

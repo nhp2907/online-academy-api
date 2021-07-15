@@ -26,8 +26,8 @@ router.post('/user', async (req, res) => {
     const body = req.body;
     try {
         body.password = body.password || `${body.username}148nac`;
-        body.roleId = body.roleId || UserRole.Student;
-        body.role = body.roleId === 2 ? 'Student' : 'Instructor';
+        body.roleId = UserRole.Instructor;
+        body.role = 'Instructor';
         const user = await signup(body);
 
         if (body.roleId === UserRole.Instructor) {
@@ -153,7 +153,11 @@ router.get('/course', async (req, res) => {
     const course = await CourseModel.find(criteria)
         .where('deleted').ne(true)
         .exec();
-    console.log('courses', course);
+
+    course.map(c => c.toJSON())
+        .map(c => {
+            console.log(c.updatedAt);
+        })
     res.send(course)
 })
 

@@ -56,6 +56,9 @@ const courseSchema = new Schema({
         required: true,
         default: false,
     },
+    publishedDate: {
+        type: Date
+    },
     disabled: {
         type: Boolean,
         default: false,
