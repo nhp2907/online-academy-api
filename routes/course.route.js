@@ -63,27 +63,198 @@ router.get('/', async (req, res) => {
 router.get('/search', async (req, res) => {
     const kw = req.query.kw;
     console.log(kw);
-    const result = [];
-    const cate = await CategoryModel.findOne({$text: {$search: kw}}).exec();
 
-    const courseFilter = {$text: {$search: kw}}
-    if (cate) {
-        const coursesByCate = await CourseModel.find({categoryId: cate._id})
-            .where('disabled').ne(true)
-            .where('deleted').ne(true)
-            .exec();
-        result.push(...coursesByCate);
-        courseFilter.categoryId = {$ne: cate._id}
-    }
+    // const result = [];
+    // const cate = await CategoryModel.findOne({$text: {$search: kw}}).exec();
+    //
+    // const courseFilter = {$text: {$search: kw}}
+    // if (cate) {
+    //     const coursesByCate = await CourseModel.find({categoryId: cate._id})
+    //         .where('disabled').ne(true)
+    //         .where('deleted').ne(true)
+    //         .exec();
+    //     result.push(...coursesByCate);
+    //     courseFilter.categoryId = {$ne: cate._id}
+    // }
+    //
+    // const coursesSearch = await CourseModel.find(courseFilter)
+    //     .where('disabled').ne(true)
+    //     .where('deleted').ne(true)
+    //     .exec();
+    // result.push(...coursesSearch);
 
-    const coursesSearch = await CourseModel.find(courseFilter)
-        .where('disabled').ne(true)
-        .where('deleted').ne(true)
-        .exec();
-    result.push(...coursesSearch);
-    const unique = [...new Set(result.map(item => item._id))];
+    const categoryIds = await CategoryModel.aggregate([
+        {
+            $match: {
+                $text: {$search: kw}
+            }
+        }, {
+            $project: {
+                _id: 1
+            }
+        }
+    ])
 
-    res.send(result)
+    const _ids = categoryIds.map(id => id._id);
+
+    const courseByCateSearch = await CourseModel.aggregate([
+        {
+            $match: {
+                $and: [
+                    {categoryId: {$in: _ids}},
+                    {disabled: {$ne: true}},
+                    {deleted: {$ne: true}}
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: 'categories',
+                let: {},
+                pipeline: [
+                    {
+                        $match: {
+                            $text: {$search: kw}
+                        }
+                    }
+                ],
+                as: 'category'
+            }
+        },
+        {
+            $unwind: "$category"
+        },
+        {
+            $lookup: {
+                from: 'instructors',
+                let: {instructorId: '$instructorId'},
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$_id", "$$instructorId"]
+                            }
+                        },
+                    }, {
+                        $lookup: {
+                            from: 'users',
+                            localField: 'userId',
+                            foreignField: '_id',
+                            as: 'user'
+                        }
+                    },
+                    {
+                        $addFields: {
+                            user: {$arrayElemAt: ['$user', 0]},
+                        }
+                    },
+                    {
+                        $project: {
+                            author: {$concat: ['$user.firstName', ' ', '$user.lastName']}
+                        }
+                    }
+                ],
+                as: 'instructor'
+            }
+        },
+        {
+            $unwind: "$instructor"
+        },
+        {
+            $addFields: {
+                "author": "$instructor.author",
+                "categoryName": "$category.name"
+            }
+        },
+        {
+            $project: {
+                category: 0,
+                instructor: 0,
+            }
+        },
+    ]).exec();
+
+    const courseByNameSearch = await CourseModel.aggregate([
+        {
+            $match: {
+                $and: [
+                    {$text: {$search: kw}}
+                ]
+            }
+        },
+        {
+            $match: {
+                $and: [
+                    {categoryId: {$nin: _ids}},
+                    {disabled: {$ne: true}},
+                    {deleted: {$ne: true}}
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: 'categories',
+                localField: 'categoryId',
+                foreignField: '_id',
+                as: 'category'
+            }
+        },
+        {
+            $unwind: "$category"
+
+        },
+        {
+            $lookup: {
+                from: 'instructors',
+                let: {instructorId: '$instructorId'},
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$_id", "$$instructorId"]
+                            }
+                        },
+                    }, {
+                        $lookup: {
+                            from: 'users',
+                            localField: 'userId',
+                            foreignField: '_id',
+                            as: 'user'
+                        }
+                    },
+                    {
+                        $addFields: {
+                            user: {$arrayElemAt: ['$user', 0]},
+                        }
+                    },
+                    {
+                        $project: {
+                            author: {$concat: ['$user.firstName', ' ', '$user.lastName']}
+                        }
+                    }
+                ],
+                as: 'instructor'
+            }
+        },
+        {
+            $unwind: "$instructor"
+        },
+        {
+            $addFields: {
+                "author": "$instructor.author",
+                "categoryName": "$category.name"
+            }
+        },
+        {
+            $project: {
+                category: 0,
+                instructor: 0,
+            }
+        },
+    ]).exec();
+    console.log(courseByNameSearch.length);
+
+    res.send(courseByNameSearch.concat(courseByCateSearch))
 })
 
 router.get('/:id', async (req, res) => {

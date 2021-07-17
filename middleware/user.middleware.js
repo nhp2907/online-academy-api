@@ -25,7 +25,6 @@ const verifyJwt = (req, res, next) => {
                 res.static(400).send({message: 'User not found'})
             }
             delete user.password;
-            console.log('user', user);
             res.locals.user = user.toJSON();
             next();
         })
