@@ -64,25 +64,6 @@ router.get('/search', async (req, res) => {
     const kw = req.query.kw;
     console.log(kw);
 
-    // const result = [];
-    // const cate = await CategoryModel.findOne({$text: {$search: kw}}).exec();
-    //
-    // const courseFilter = {$text: {$search: kw}}
-    // if (cate) {
-    //     const coursesByCate = await CourseModel.find({categoryId: cate._id})
-    //         .where('disabled').ne(true)
-    //         .where('deleted').ne(true)
-    //         .exec();
-    //     result.push(...coursesByCate);
-    //     courseFilter.categoryId = {$ne: cate._id}
-    // }
-    //
-    // const coursesSearch = await CourseModel.find(courseFilter)
-    //     .where('disabled').ne(true)
-    //     .where('deleted').ne(true)
-    //     .exec();
-    // result.push(...coursesSearch);
-
     const categoryIds = await CategoryModel.aggregate([
         {
             $match: {
@@ -116,6 +97,11 @@ router.get('/search', async (req, res) => {
                         $match: {
                             $text: {$search: kw}
                         }
+                    },
+                    {
+                        $project: {
+                            name: 1
+                        }
                     }
                 ],
                 as: 'category'
@@ -144,9 +130,7 @@ router.get('/search', async (req, res) => {
                         }
                     },
                     {
-                        $addFields: {
-                            user: {$arrayElemAt: ['$user', 0]},
-                        }
+                       $unwind: '$user'
                     },
                     {
                         $project: {
@@ -163,7 +147,8 @@ router.get('/search', async (req, res) => {
         {
             $addFields: {
                 "author": "$instructor.author",
-                "categoryName": "$category.name"
+                "categoryName": "$category.name",
+                id: "$_id"
             }
         },
         {
@@ -242,7 +227,8 @@ router.get('/search', async (req, res) => {
         {
             $addFields: {
                 "author": "$instructor.author",
-                "categoryName": "$category.name"
+                "categoryName": "$category.name",
+                id: "$_id"
             }
         },
         {
