@@ -19,6 +19,7 @@ const verifyInvoice = (req, res, next) => {
                 res.status(400).send({
                     message: "Invoice not found in mdw"
                 })
+                console.error('invoice not found in mdw');
                 return;
             }
             next()

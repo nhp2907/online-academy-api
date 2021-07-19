@@ -54,6 +54,13 @@ router.put('/', async (req, res) => {
     const updateUser = req.body;
     const {id, email} = updateUser;
 
+    if (id != res.locals.user.id) {
+        res.status(401).send({
+            message: `Unauthorized`
+        })
+        return;
+    }
+
     if (email) {
         const user = await UserModel.findOne({email}).exec();
         if (user && user.id !== id) {
