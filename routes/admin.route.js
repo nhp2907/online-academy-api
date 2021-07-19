@@ -111,11 +111,19 @@ router.post('/category', async (req, res) => {
     }
 })
 
-router.put('/', async (req, res) => {
+router.put('/category', async (req, res) => {
     const cate = req.body;
-    let newVar = await CategoryModel.updateOne({_id: cate.id}, cate, {upsert: true});
-    console.log('updater esult: ', newVar);
-    res.send(await CategoryModel.findById(cate.id));
+    try {
+        delete cate.subs
+        cate.uniqueName = cate.name.toLowerCase();
+        let newVar = await CategoryModel.updateOne({_id: cate.id}, cate, {upsert: true});
+        console.log('updater esult: ', newVar);
+        res.send(await CategoryModel.findById(cate.id));
+    } catch (err) {
+        res.status(400).send({
+            message: err.message
+        })
+    }
 })
 
 router.delete('/category/:id', async (req, res) => {
@@ -188,7 +196,7 @@ router.delete('/course/:courseId', async (req, res) => {
             res.status(400).send({message: 'Course not found'});
         }
 
-        course.deleted= true;
+        course.deleted = true;
 
         const updateResult = await course.save({validateModifiedOnly: true});
         res.send(updateResult);

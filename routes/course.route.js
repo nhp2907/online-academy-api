@@ -53,6 +53,7 @@ router.get('/', async (req, res) => {
         .where('disabled').ne(true)
         .where('deleted').ne(true)
         .exec();
+
     course.map(c => c.toJSON())
         .map(c => {
             console.log(typeof c.updatedAt);
@@ -130,7 +131,7 @@ router.get('/search', async (req, res) => {
                         }
                     },
                     {
-                       $unwind: '$user'
+                        $unwind: '$user'
                     },
                     {
                         $project: {

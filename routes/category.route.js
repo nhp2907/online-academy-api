@@ -12,6 +12,26 @@ router.get('/', async (req, res) => {
         .populate('subs')
         .exec();
 
+    // const categories = await CategoryModel.aggregate([
+    //     {
+    //         $match: {
+    //             level: 1,
+    //             deleted: {$ne: true}
+    //         }
+    //     }, {
+    //         $lookup: {
+    //             from: "categories",
+    //             let: {parentId: "$_id"},
+    //             pipeline: [{
+    //                 $match: {
+    //                     parentId: "$$parentId"
+    //                 }
+    //             }],
+    //             as: "subs"
+    //         }
+    //     }
+    // ]).exec();
+
     res.send(r)
 })
 
