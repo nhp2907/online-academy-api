@@ -12,7 +12,7 @@ const CourseModel = require("../schemas/course.schema");
 const InvoiceModel = require("../schemas/invoice.schema");
 const {PROJECT_DIR} = require("../setting");
 const {apiUrl} = require("../constant/configs");
-const USER_IMAGE_PATH = "public/user/image";
+const USER_IMAGE_PATH = PROJECT_DIR + '/' + "public/user/image";
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
