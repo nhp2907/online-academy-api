@@ -100,10 +100,12 @@ router.post('/:id/image', upload.single('image'), async (req, res) => {
             {_id: userId},
             {image: newImageUrl, imagePath: file.path}, {upsert: true});
 
+
         res.send(updateResult)
         if (oldImagePath) {
-            console.log('remvoe file path: ', oldImagePath)
-            fs.rmSync(oldImagePath, {
+            const removeFile = `${PROJECT_DIR}\\${oldImagePath}`;
+            console.log('remvoe file path: ', removeFile)
+            fs.rmSync(removeFile, {
                 force: true
             })
         }
