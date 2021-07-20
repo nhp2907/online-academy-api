@@ -1,13 +1,9 @@
-import * as development from "./development";
-import * as production from "./production";
-import * as testing from "./testing";
-import * as staging from "./staging";
+const development = require("./development");
+const production = require("./production");
 
 const envs = {
-  development,
-  testing,
-  staging,
-  production
+    development,
+    production
 };
 
-export default envs;
+module.exports = envs;
