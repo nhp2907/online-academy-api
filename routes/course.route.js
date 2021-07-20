@@ -382,11 +382,12 @@ router.post('/:id/image', verifyJwt, verifyInstructor, uploadCourseImage.single(
         const courseId = req.params.id;
         const course = await CourseModel.findOne({_id: courseId}).exec();
         const oldImage = course.image;
-        const newImagePath = apiUrl + file.path.replace('public', '');
+        const newImagePath = apiUrl + file.path.replace('public', '').split("\\").join("/");
         const updateResult = await CourseModel.updateOne({_id: courseId}, {image: newImagePath});
         res.send(updateResult)
         if (oldImage) {
-            fs.rmSync('public/' + oldImage, {
+            const removeFile = `${PROJECT_DIR}\\${oldImage}`;
+            fs.rmSync(removeFile, {
                 force: true
             })
         }

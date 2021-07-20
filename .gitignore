@@ -3,5 +3,5 @@ node_modules
 .env
 
 data
-public/course/image
-public/user/image
+#public/course/image
+#public/user/image
