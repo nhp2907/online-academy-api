@@ -387,7 +387,7 @@ router.post('/:id/image', verifyJwt, verifyInstructor, uploadCourseImage.single(
         let newImagePath;
         if (currentEnvName === 'production') {
             newImagePath = currentEnv.apiUrl + '/course/image/' + file.filename;
-            console.log('new Image url', newImageUrl)
+            console.log('new Image url', newImagePath)
         } else {
             newImagePath = currentEnv.apiUrl + file.path.replace('public', '').split("\\").join("/");
         }
@@ -558,8 +558,18 @@ router.put('/:courseId/chapter/:chapterId/video', verifyJwt, verifyInstructor, a
 
 router.delete('/:courseId/chapter/:chapterId/video/:videoId', verifyJwt, verifyInstructor, async (req, res) => {
     try {
+        const video = await CourseVideoModel.findOne({_id: req.params.videoId}).exec();
+        if (!video) {
+            res.status(400).send({message: 'video not found'})
+        }
         const deleteRes = await CourseVideoModel.deleteOne({_id: req.params.videoId}).exec()
         res.send(deleteRes);
+
+        if (video.videoUrl) {
+            fs.rmSync(video.videoUrl, {
+                force: true
+            })
+        }
     } catch (err) {
         res.status(400).send({message: err.message})
     }
