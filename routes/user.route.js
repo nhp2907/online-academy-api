@@ -1,3 +1,5 @@
+import {currentEnvName} from "../configs/evironment";
+
 const fs = require('fs');
 const ValidationError = require('mongoose/lib/error/validation');
 
@@ -11,7 +13,7 @@ const UserRole = require("../constant/UserRole");
 const CourseModel = require("../schemas/course.schema");
 const InvoiceModel = require("../schemas/invoice.schema");
 const {PROJECT_DIR} = require("../setting");
-const {apiUrl} = require("../constant/configs");
+const {currentEnv} = require('../configs/evironment')
 const USER_IMAGE_PATH = PROJECT_DIR + '/' + "public/user/image";
 
 const storage = multer.diskStorage({
@@ -86,6 +88,7 @@ router.put('/', async (req, res) => {
 
 router.post('/:id/image', upload.single('image'), async (req, res) => {
     const file = req.file;
+    console.log('upload file', file);
     if (!file) {
         res.status(400).send({
             message: 'Image not found!'
@@ -102,17 +105,21 @@ router.post('/:id/image', upload.single('image'), async (req, res) => {
             return;
         }
         const oldImagePath = user.imagePath;
-        const newImageUrl = apiUrl + file.path.replace('public', '').split("\\").join("/");
+        let newImageUrl;
+        if (currentEnvName === 'production') {
+            newImageUrl = currentEnv.apiUrl + '/user/image' + file.name || file.filename;
+            console.log('new Image url', newImageUrl)
+        } else {
+            newImageUrl = currentEnv.apiUrl + file.path.replace('public', '').split("\\").join("/");
+        }
         const updateResult = await UserModel.updateOne(
             {_id: userId},
             {image: newImageUrl, imagePath: file.path}, {upsert: true});
 
-
         res.send(updateResult)
         if (oldImagePath) {
-            const removeFile = `${PROJECT_DIR}\\${oldImagePath}`;
-            console.log('remvoe file path: ', removeFile)
-            fs.rmSync(removeFile, {
+            console.log('remove file path: ', oldImagePath)
+            fs.rmSync(oldImagePath, {
                 force: true
             })
         }
