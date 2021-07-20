@@ -1,4 +1,4 @@
-import {currentEnvName} from "../configs/evironment";
+const {currentEnvName} = require("../configs/evironment");
 
 const fs = require('fs');
 const ValidationError = require('mongoose/lib/error/validation');
