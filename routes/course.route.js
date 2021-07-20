@@ -11,6 +11,7 @@ const CategoryModel = require("../schemas/category.schema");
 const InstructorModel = require("../schemas/instructor.schema");
 const CourseReviewModel = require("../schemas/course-review.schema");
 const InvoiceModel = require("../schemas/invoice.schema");
+const {currentEnvName, currentEnv} = require("../configs/evironment");
 const {verifyInvoice} = require("../middleware/learning.middleware");
 const {verifyJwt} = require("../middleware/user.middleware");
 const {verifyInstructor} = require("../middleware/user.middleware");
@@ -382,12 +383,20 @@ router.post('/:id/image', verifyJwt, verifyInstructor, uploadCourseImage.single(
         const courseId = req.params.id;
         const course = await CourseModel.findOne({_id: courseId}).exec();
         const oldImage = course.image;
-        const newImagePath = apiUrl + file.path.replace('public', '').split("\\").join("/");
+
+        let newImagePath;
+        if (currentEnvName === 'production') {
+            newImagePath = currentEnv.apiUrl + '/course/image/' + file.filename;
+            console.log('new Image url', newImageUrl)
+        } else {
+            newImagePath = currentEnv.apiUrl + file.path.replace('public', '').split("\\").join("/");
+        }
+
         const updateResult = await CourseModel.updateOne({_id: courseId}, {image: newImagePath});
         res.send(updateResult)
+
         if (oldImage) {
-            const removeFile = `${PROJECT_DIR}\\${oldImage}`;
-            fs.rmSync(removeFile, {
+            fs.rmSync(oldImage, {
                 force: true
             })
         }

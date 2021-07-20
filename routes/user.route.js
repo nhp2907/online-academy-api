@@ -107,7 +107,7 @@ router.post('/:id/image', upload.single('image'), async (req, res) => {
         const oldImagePath = user.imagePath;
         let newImageUrl;
         if (currentEnvName === 'production') {
-            newImageUrl = currentEnv.apiUrl + '/user/image' + file.name || file.filename;
+            newImageUrl = currentEnv.apiUrl + '/user/image/' + file.filename;
             console.log('new Image url', newImageUrl)
         } else {
             newImageUrl = currentEnv.apiUrl + file.path.replace('public', '').split("\\").join("/");
