@@ -499,8 +499,13 @@ router.get('/:courseId/chapter/:chapterId/video/:videoId/stream', async (req, re
     }
 
     const video = await CourseVideoModel.findOne({_id: videoId}).exec();
-    const path = PROJECT_DIR + '\\' + video.videoUrl;
-    console.log('streaming video path: ', path )
+    let path;
+    if (currentEnvName === "development") {
+        path = PROJECT_DIR + '\\' + video.videoUrl;
+    } else {
+        path = PROJECT_DIR + '/' + video.videoUrl;
+    }
+    console.log('streaming video path: ', path)
     res.sendFile(path, {}, (a) => {
 
     })
