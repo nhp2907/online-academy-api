@@ -11,11 +11,13 @@ const CategoryModel = require("../schemas/category.schema");
 const InstructorModel = require("../schemas/instructor.schema");
 const CourseReviewModel = require("../schemas/course-review.schema");
 const InvoiceModel = require("../schemas/invoice.schema");
+const {getAggregationStage} = require("../services/course.service");
 const {currentEnvName, currentEnv} = require("../configs/evironment");
 const {verifyInvoice} = require("../middleware/learning.middleware");
 const {verifyJwt} = require("../middleware/user.middleware");
 const {verifyInstructor} = require("../middleware/user.middleware");
 const {apiUrl} = require("../constant/configs");
+const mongoose = require('mongoose');
 const {PROJECT_DIR} = require("../setting");
 
 const COURSE_IMAGE_PATH = "public/course/image";
@@ -45,21 +47,42 @@ const uploadCourseVideo = multer({storage: videoStorage})
 
 router.get('/', async (req, res) => {
     const criteria = req.query
-    if (criteria.categoryName) {
-        const cate = await CategoryModel.findOne({uniqueName: criteria.categoryName.toLowerCase()}).exec();
+    const {categoryId, instructorId, categoryName, name, pageIndex = 0, pageSize = 1000000000} = criteria;
+
+    if (categoryId) {
+        const cate = await CategoryModel.findOne({_id: categoryId}).exec();
+        if (cate.level === 2) {
+            criteria.subCategoryId = mongoose.Types.ObjectId(categoryId)
+            delete criteria.categoryId
+        } else {
+            criteria.categoryId = mongoose.Types.ObjectId(categoryId)
+        }
+    } else if (categoryName) {
+        const cate = await CategoryModel.findOne({uniqueName: categoryName.toLowerCase()}).exec();
         delete criteria.categoryName
         criteria.categoryId = cate._id
     }
-    const course = await CourseModel.find(criteria)
-        .where('disabled').ne(true)
-        .where('deleted').ne(true)
+
+    if (instructorId) {
+        criteria.instructorId = mongoose.Types.ObjectId(instructorId)
+    }
+
+    delete criteria.pageIndex
+    delete criteria.pageSize
+
+
+    const pipeline = getAggregationStage(criteria);
+    const courses = await CourseModel.aggregate([pipeline])
+        .skip(pageIndex * pageSize)
+        .limit(pageSize)
         .exec();
 
-    course.map(c => c.toJSON())
-        .map(c => {
-            console.log(typeof c.updatedAt);
-        })
-    res.send(course)
+    // const course = await CourseModel.find(criteria)
+    //     .where('disabled').ne(true)
+    //     .where('deleted').ne(true)
+    //     .exec();
+
+    res.send(courses)
 })
 
 router.get('/search', async (req, res) => {

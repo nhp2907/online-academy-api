@@ -63,7 +63,7 @@ const findAll = async () => {
         }, {
             model: CourseReview,
             as: 'reviews'
-        },{
+        }, {
             model: CategoryLink,
             as: 'categoryLink',
             include: {
@@ -117,17 +117,17 @@ const findById = async (id) => {
         }, {
             model: Advancement,
             as: 'advancement'
-        },{
+        }, {
             model: CategoryLink,
             as: 'categoryLink',
             include: {
                 model: SubCategory,
                 as: 'subCategory'
             }
-        },{
+        }, {
             model: Level,
             as: 'level'
-        },{
+        }, {
             model: Advancement,
             as: 'advancement'
         }]
@@ -160,20 +160,20 @@ const getTopCoursesInWeek = async () => {
                     attributes: ['id', 'firstName', 'lastName']
                 }
             },
-            {
-                model: Advancement,
-                as: 'advancement',
-                attributes: ['id', 'description'],
-                where: {
-                    description: {
-                        [Op.substring]: '%BestSeller%'
+                {
+                    model: Advancement,
+                    as: 'advancement',
+                    attributes: ['id', 'description'],
+                    where: {
+                        description: {
+                            [Op.substring]: '%BestSeller%'
+                        }
                     }
-                }
-            },{
-                model: Level,
-                as: 'level',
-                attributes: ['id','description'],
-            }]
+                }, {
+                    model: Level,
+                    as: 'level',
+                    attributes: ['id', 'description'],
+                }]
         });
         return topCoursesInWeek.map(course => course.toJSON());
     } catch (err) {
@@ -432,20 +432,19 @@ const getSectionVideo = async (sectionid) => {
     }
 }
 const changeStatusCourse = async (courseid, status) => {
-    try{
+    try {
         const updateResult = await Course.update(
             {
                 status: +status
             },
             {
-            where: {
-                id: courseid
-            }
-        });
-        if(updateResult === null) return null;
+                where: {
+                    id: courseid
+                }
+            });
+        if (updateResult === null) return null;
         return updateResult;
-    }
-    catch (err){
+    } catch (err) {
         throw err;
     }
 }
@@ -554,5 +553,83 @@ async function deleteCourse(courseId) {
     return await course.destroy();
 }
 
+const getAggregationStage = (match) => {
+    return [
+        {
+            $match: match
+        },
+        {
+            $match: {
+                $and: [
+                    {disabled: {$ne: true}},
+                    {deleted: {$ne: true}},
+                    {published: true}
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: 'categories',
+                localField: 'categoryId',
+                foreignField: '_id',
+                as: 'category'
+            }
+        },
+        {
+            $unwind: "$category"
+
+        },
+        {
+            $lookup: {
+                from: 'instructors',
+                let: {instructorId: '$instructorId'},
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$_id", "$$instructorId"]
+                            }
+                        },
+                    }, {
+                        $lookup: {
+                            from: 'users',
+                            localField: 'userId',
+                            foreignField: '_id',
+                            as: 'user'
+                        }
+                    },
+                    {
+                        $addFields: {
+                            user: {$arrayElemAt: ['$user', 0]},
+                        }
+                    },
+                    {
+                        $project: {
+                            author: {$concat: ['$user.firstName', ' ', '$user.lastName']}
+                        }
+                    }
+                ],
+                as: 'instructor'
+            }
+        },
+        {
+            $unwind: "$instructor"
+        },
+        {
+            $addFields: {
+                "author": "$instructor.author",
+                "categoryName": "$category.name",
+                id: "$_id"
+            }
+        },
+        {
+            $project: {
+                category: 0,
+                instructor: 0,
+            }
+        },
+    ]
+}
 module.exports = {
+    getAggregationStage
 }
