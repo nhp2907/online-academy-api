@@ -459,7 +459,6 @@ router.post('/:courseId/chapter', verifyJwt, verifyInstructor, async (req, res) 
             })
         } else {
             throw err;
-            co
         }
     }
 })

@@ -21,6 +21,22 @@ router.get('/user', async (req, res) => {
     res.send(users);
 })
 
+router.get('/instructor', async (req, res) => {
+    const criteria = req.params;
+    const users = await UserModel.find(criteria).where({roleId: UserRole.Instructor})
+        .where('deleted').ne(true)
+        .exec();
+    res.send(users);
+})
+
+router.get('/student', async (req, res) => {
+    const criteria = req.params;
+    const users = await UserModel.find(criteria).where({roleId: UserRole.Student})
+        .where('deleted').ne(true)
+        .exec();
+    res.send(users);
+})
+
 // create for instructor only
 router.post('/user', async (req, res) => {
     const body = req.body;
