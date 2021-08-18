@@ -712,7 +712,7 @@ router.put('/:courseId/review', verifyJwt, verifyInvoice, async (req, res) => {
         course.rating = course.rating + delta / course.numReview
 
         const updateResult = await findReview.update(review);
-        await course.save();
+        await course.save({validateModifiedOnly: true});
 
         res.send(updateResult);
 

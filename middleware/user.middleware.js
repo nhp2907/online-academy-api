@@ -11,13 +11,15 @@ const verifyJwt = (req, res, next) => {
         })
     }
     const token = authHeader.substring(7);
-    if (req.originalUrl === '/logout' || !token) {
+    if (req.originalUrl === '/logout') {
         next();
     } else {
         jwt.verify(token, process.env.JWT_SECRET_KEY, async (err, decoded) => {
             if (err) {
                 console.log("err")
-                throw new Error("Token is invalid!")
+                // throw new Error("Token is invalid!")
+                res.status(401).send({message: "Invalid token!"})
+                return;
             }
 
             const user = await UserModel.findOne({username: decoded.username, deleted: {$ne: true}}).exec();

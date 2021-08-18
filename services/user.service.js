@@ -24,7 +24,7 @@ async function updatePassword(userId, oldPass, newPass) {
         user.password = hashedPassword;
         console.log('update password new hashedPassword', hashedPassword);
         await UserModel.updateOne({_id: userId}, {password: hashedPassword})
-        return jwt.sign({username: user.username}, process.env.JWT_SECRET_KEY);
+        return jwt.sign({username: user.username}, process.env.JWT_SECRET_KEY, {expiresIn: tokenExpiresTime});
 
     } else {
         throw new Error("Password is incorrect!");
