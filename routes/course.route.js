@@ -708,7 +708,7 @@ router.put('/:courseId/review', verifyJwt, verifyInvoice, async (req, res) => {
         }
 
         const course = await CourseModel.findOne({_id: courseId}).exec()
-        const delta = course.rating - review.rating;
+        const delta = review.rating - findReview.rating;
         course.rating = course.rating + delta / course.numReview
 
         const updateResult = await findReview.update(review);
