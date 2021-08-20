@@ -10,6 +10,7 @@ const CategoryModel = require("../schemas/category.schema");
 const CourseModel = require("../schemas/course.schema");
 const CategoryService = require('../services/category.service')
 const InstructorModel = require("../schemas/instructor.schema");
+const {sendEmail} = require("../services/mail.service");
 const {signup} = require("../services/auth.service");
 
 //region User
@@ -41,7 +42,9 @@ router.get('/student', async (req, res) => {
 router.post('/user', async (req, res) => {
     const body = req.body;
     try {
-        body.password = body.password || `${body.username}148nac`;
+        // body.password = body.password || `${body.username}148nac`;
+        const randomPass = Math.random().toString(36).slice(-8)
+        body.password = randomPass;
         body.roleId = UserRole.Instructor;
         body.role = 'Instructor';
         const user = await signup(body);
@@ -59,6 +62,13 @@ router.post('/user', async (req, res) => {
         }
 
         res.send(user);
+        sendEmail({
+                from: 'hoangphucxm147@outlook.com',
+                to: `${body.email}`,
+                subject: 'Online Academy Instructor Account',
+                html: `<p>Your password for Instructor account on Online Academy is: <strong>${randomPass}</strong></p>`
+            }
+        )
     } catch (err) {
         if (err instanceof ValidationError) {
             console.log('create course error: ', err);
